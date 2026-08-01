@@ -1,0 +1,3023 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="The Office of Seaveland - passports, fishing licences and the conditions board.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#127754;</text></svg>">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; }
+  img, canvas, svg { display: block; max-width: 100%; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+</style>
+</head>
+<body>
+<title>The Office of Seaveland</title>
+
+<style>
+  :root {
+    --ground: #e9eeec;
+    --surface: #f4f7f5;
+    --sunk: #dfe6e3;
+    --ink: #0c1a17;
+    --ink-soft: #5d716c;
+    --rule: #c3d0cb;
+    --accent: #14675a;
+    --signal: #b4531f;
+    --sea-far: #9fb9b3;
+    --sea-near: #14675a;
+    --doc-ink: #f0efe6;
+    --doc-ground: #10312b;
+    --doc-line: #2e5850;
+    --gold: #c9a227;
+
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --data: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #071311;
+      --surface: #0d1c19;
+      --sunk: #050f0d;
+      --ink: #dfe8e4;
+      --ink-soft: #8fa5a0;
+      --rule: #1e3733;
+      --accent: #4fb79a;
+      --signal: #e08a4a;
+      --sea-far: #12312c;
+      --sea-near: #4fb79a;
+      --doc-ground: #0a2621;
+      --doc-line: #24463f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #071311;
+    --surface: #0d1c19;
+    --sunk: #050f0d;
+    --ink: #dfe8e4;
+    --ink-soft: #8fa5a0;
+    --rule: #1e3733;
+    --accent: #4fb79a;
+    --signal: #e08a4a;
+    --sea-far: #12312c;
+    --sea-near: #4fb79a;
+    --doc-ground: #0a2621;
+    --doc-line: #24463f;
+  }
+
+  :root[data-theme="light"] {
+    --ground: #e9eeec;
+    --surface: #f4f7f5;
+    --sunk: #dfe6e3;
+    --ink: #0c1a17;
+    --ink-soft: #5d716c;
+    --rule: #c3d0cb;
+    --accent: #14675a;
+    --signal: #b4531f;
+    --sea-far: #9fb9b3;
+    --sea-near: #14675a;
+    --doc-ground: #10312b;
+    --doc-line: #2e5850;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 64rem; margin: 0 auto; padding: 0 1.5rem 5rem; }
+
+  /* panels below use grid/flex, which would otherwise beat the attribute */
+  [hidden] { display: none !important; }
+
+  a { color: inherit; }
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  select:focus-visible, textarea:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- shared type ---------- */
+
+  .eyebrow {
+    font-family: var(--data);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(1.5rem, 3.4vw, 2rem);
+    letter-spacing: -0.01em;
+    margin: 0.35rem 0 0.9rem;
+    text-wrap: balance;
+  }
+
+  .lede { max-width: 40rem; color: var(--ink-soft); margin: 0 0 1.5rem; }
+  .lede strong { color: var(--ink); font-weight: 600; }
+
+  section { padding-top: 3.5rem; }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 2.5rem 0 1.5rem;
+  }
+
+  .seal { width: 74px; height: 74px; flex: none; }
+  .seal .beam { transform-origin: 50px 50px; animation: sweep 9s linear infinite; }
+  @keyframes sweep { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .seal .beam { animation: none; } }
+
+  .masthead h1 {
+    font-family: var(--display);
+    font-size: clamp(2rem, 6vw, 3.1rem);
+    line-height: 1.02;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+    margin: 0.15rem 0 0.2rem;
+  }
+
+  .masthead p { color: var(--ink-soft); font-size: 0.95rem; margin: 0; }
+
+  nav.jump {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    padding: 0.85rem 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--rule);
+  }
+  nav.jump a {
+    font-family: var(--data);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 0.15rem 0;
+    border-bottom: 1px solid transparent;
+  }
+  nav.jump a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ---------- conditions board ---------- */
+
+  .board {
+    margin-top: 2.25rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    overflow: hidden;
+  }
+
+  .board-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .board-head strong {
+    font-family: var(--data);
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .stamp { font-family: var(--data); font-size: 0.7rem; color: var(--ink-soft); letter-spacing: 0.06em; }
+
+  .readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); margin: 0; }
+
+  .readout { padding: 1.1rem 1.25rem 1.2rem; border-right: 1px solid var(--rule); }
+  .readout:last-child { border-right: 0; }
+
+  .readout dt {
+    font-family: var(--data);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.35rem;
+  }
+
+  .readout dd {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 1.75rem;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .readout small {
+    display: block;
+    font-family: var(--body);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 0.25rem;
+  }
+
+  canvas#water-line { display: block; width: 100%; height: 118px; border-top: 1px solid var(--rule); }
+
+  .board-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.9rem;
+    align-items: baseline;
+    padding: 0.7rem 1.25rem 0.8rem;
+    border-top: 1px solid var(--rule);
+    font-size: 0.83rem;
+    color: var(--ink-soft);
+  }
+  .board-foot .lbl {
+    font-family: var(--data);
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--signal);
+  }
+
+  /* ---------- forms ---------- */
+
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+  @media (max-width: 52rem) { .app { grid-template-columns: 1fr; } }
+
+  .form {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    padding: 1.5rem 1.35rem;
+    display: grid;
+    gap: 1.05rem;
+  }
+
+  .field { display: grid; gap: 0.3rem; min-width: 0; }
+
+  .field > label, .flabel {
+    font-family: var(--data);
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  input[type="text"], input[type="password"], select, textarea {
+    font: inherit;
+    font-size: 0.95rem;
+    color: var(--ink);
+    background: var(--ground);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+    padding: 0.55rem 0.65rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  input[readonly] { color: var(--ink-soft); }
+
+  textarea.code {
+    font-family: var(--data);
+    font-size: 0.72rem;
+    line-height: 1.5;
+    resize: vertical;
+    word-break: break-all;
+  }
+
+  .hint { font-size: 0.78rem; color: var(--ink-soft); }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.05rem; }
+  @media (max-width: 32rem) { .row { grid-template-columns: 1fr; } }
+
+  .filebtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--data);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px dashed var(--rule);
+    background: var(--ground);
+    color: var(--ink-soft);
+    padding: 0.6rem 0.75rem;
+    cursor: pointer;
+  }
+  .filebtn:hover { border-color: var(--accent); color: var(--accent); }
+  .filebtn input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+  button {
+    font-family: var(--data);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    border-radius: 0;
+    cursor: pointer;
+  }
+
+  button.issue {
+    font-size: 0.75rem;
+    background: var(--accent);
+    color: var(--surface);
+    border: 1px solid var(--accent);
+    padding: 0.75rem 1rem;
+    transition: filter 0.15s ease;
+  }
+  button.issue:hover { filter: brightness(1.12); }
+  button.issue:disabled { background: var(--rule); border-color: var(--rule); color: var(--ink-soft); cursor: not-allowed; filter: none; }
+
+  button.minor {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+    padding: 0.5rem 0.7rem;
+  }
+  button.minor:hover { border-color: var(--accent); color: var(--accent); }
+  button.minor.warn:hover { border-color: var(--signal); color: var(--signal); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+  .note { font-size: 0.8rem; color: var(--ink-soft); text-transform: none; letter-spacing: 0; font-family: var(--body); }
+
+  .gate {
+    font-size: 0.85rem;
+    color: var(--signal);
+    border-left: 2px solid var(--signal);
+    padding-left: 0.7rem;
+  }
+
+  details.signin {
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    margin-bottom: 1.5rem;
+  }
+  details.signin > summary {
+    cursor: pointer;
+    padding: 0.8rem 1.1rem;
+    font-family: var(--data);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    list-style: none;
+  }
+  details.signin > summary::-webkit-details-marker { display: none; }
+  details.signin > summary::before { content: "+\00a0\00a0"; color: var(--accent); }
+  details.signin[open] > summary::before { content: "\2013\00a0\00a0"; }
+  details.signin[open] > summary { border-bottom: 1px solid var(--rule); }
+  details.signin .inner { padding: 1.2rem 1.1rem; }
+
+  /* ---------- issued documents ---------- */
+
+  .doc {
+    background: var(--doc-ground);
+    color: var(--doc-ink);
+    border: 1px solid var(--doc-line);
+    padding: 1.25rem 1.25rem 1rem;
+    display: grid;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .doc::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 7px),
+      radial-gradient(120% 90% at 90% 0%, rgba(201,162,39,0.18), transparent 60%);
+    pointer-events: none;
+  }
+
+  .doc > * { position: relative; }
+
+  .doc-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--doc-line);
+    padding-bottom: 0.75rem;
+  }
+  .doc-head svg { width: 38px; height: 38px; flex: none; }
+  .doc-head .kind {
+    font-family: var(--data);
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .doc-head .who { font-family: var(--display); font-size: 1.05rem; line-height: 1.2; }
+
+  .doc-body { display: grid; grid-template-columns: 5.5rem 1fr; gap: 1rem; }
+  .doc.licence .doc-body { grid-template-columns: 1fr; }
+
+  .photo {
+    width: 5.5rem;
+    height: 7rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--doc-line);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+  }
+  .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo span {
+    font-family: var(--data);
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    color: rgba(240,239,230,0.4);
+    text-align: center;
+    padding: 0 0.3rem;
+  }
+
+  .doc-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; align-content: start; margin: 0; }
+  .doc-fields > div { min-width: 0; }
+  .doc-fields dt {
+    font-family: var(--data);
+    font-size: 0.56rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(240,239,230,0.5);
+  }
+  .doc-fields dd { margin: 0.1rem 0 0; font-size: 0.9rem; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .doc-fields .wide { grid-column: 1 / -1; }
+
+  .mrz {
+    font-family: var(--data);
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    white-space: pre;
+    color: rgba(240,239,230,0.75);
+    background: rgba(0,0,0,0.25);
+    border-top: 1px solid var(--doc-line);
+    margin: 0 -1.25rem -1rem;
+    padding: 0.6rem 1.25rem 0.7rem;
+    overflow-x: auto;
+  }
+
+  .doc.licence { --doc-ground: #2a1a0c; --doc-line: #4a3018; }
+  .doc.licence .doc-head .kind { color: #e6a94f; }
+  .doc.licence::before {
+    background:
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 7px),
+      radial-gradient(120% 90% at 90% 0%, rgba(230,169,79,0.2), transparent 60%);
+  }
+
+  .doc-empty {
+    border: 1px dashed var(--rule);
+    background: var(--surface);
+    color: var(--ink-soft);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    font-family: var(--data);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .doc-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; margin-top: 0.75rem; }
+
+  /* ---------- pending applications ---------- */
+
+  .pending {
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    padding: 1.35rem 1.25rem;
+    display: grid;
+    gap: 1.1rem;
+  }
+  .pending-head { display: flex; flex-wrap: wrap; gap: 0.6rem 0.9rem; align-items: center; }
+
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 0.8rem 1rem;
+    margin: 0;
+  }
+  .facts dt {
+    font-family: var(--data);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .facts dd { margin: 0.15rem 0 0; font-size: 0.92rem; overflow-wrap: anywhere; }
+
+  .pill {
+    font-family: var(--data);
+    font-size: 0.64rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.28rem 0.55rem;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .pill.clear { color: var(--accent); }
+  .pill.flagged { color: var(--signal); }
+
+  /* ---------- register ---------- */
+
+  .lookup { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; align-items: end; max-width: 34rem; }
+  @media (max-width: 32rem) { .lookup { grid-template-columns: 1fr; } }
+
+  .record { margin-top: 1.5rem; border: 1px solid var(--rule); background: var(--surface); }
+
+  .record-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .record-head .who { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
+  .record-head .no { font-family: var(--data); font-size: 0.95rem; letter-spacing: 0.05em; }
+  .record-head .holder { font-size: 0.82rem; color: var(--ink-soft); }
+
+  .mug {
+    width: 3rem;
+    height: 3.8rem;
+    flex: none;
+    border: 1px solid var(--rule);
+    background: var(--ground);
+    overflow: hidden;
+  }
+  .mug img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  button.masked {
+    font-family: var(--data);
+    font-size: inherit;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    border-bottom: 1px dotted currentColor;
+    cursor: pointer;
+  }
+  button.masked:hover { color: var(--accent); }
+  .doc button.masked:hover { color: var(--gold); }
+
+  .mug.initials {
+    display: grid;
+    place-items: center;
+    font-family: var(--display);
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+  }
+  .mugrow { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+  .vitem {
+    display: grid;
+    grid-template-columns: 7rem 1fr auto;
+    gap: 0.75rem 1rem;
+    align-items: baseline;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .vitem:last-child { border-bottom: 0; }
+  .vitem .when { font-family: var(--data); font-size: 0.72rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .vitem h4 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+  .vitem p { margin: 0.15rem 0 0; font-size: 0.85rem; color: var(--ink-soft); }
+  .vitem .penalty {
+    font-family: var(--data);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--signal);
+    white-space: nowrap;
+  }
+  @media (max-width: 36rem) {
+    .vitem { grid-template-columns: 1fr; gap: 0.2rem; }
+    .vitem .penalty { white-space: normal; }
+  }
+
+  .record .empty { padding: 1.6rem 1.25rem; font-size: 0.92rem; color: var(--ink-soft); }
+
+  /* ---------- the Office ---------- */
+
+  .office { margin-top: 2.5rem; border: 1px solid var(--rule); background: var(--surface); }
+
+  .office-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .office-bar .title {
+    font-family: var(--data);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .office-bar .president { font-size: 0.8rem; color: var(--ink-soft); }
+  .office-bar .president b { font-family: var(--data); font-weight: 600; color: var(--accent); }
+
+  .pane { padding: 1.35rem 1.25rem; display: grid; gap: 1.05rem; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--rule); }
+  .tabs button {
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--ink-soft);
+    padding: 0.75rem 1.1rem;
+  }
+  .tabs button:hover { color: var(--ink); }
+  .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .subrule { border-top: 1px solid var(--rule); }
+
+  .person {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.9rem;
+    align-items: center;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .person:last-child { border-bottom: 0; }
+  .person .name { font-size: 0.95rem; font-weight: 600; }
+  .person .nums { font-family: var(--data); font-size: 0.72rem; color: var(--ink-soft); }
+  .person .nums span { white-space: nowrap; }
+  @media (max-width: 34rem) {
+    .person { grid-template-columns: auto 1fr; }
+    .person > :last-child { grid-column: 2; justify-self: start; }
+  }
+
+  /* ---------- desks & notices ---------- */
+
+  .desks { display: grid; border-top: 1px solid var(--rule); }
+
+  .desk {
+    display: grid;
+    grid-template-columns: 9rem 1fr auto;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 1.05rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .desk .room {
+    font-family: var(--data);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+  }
+  .desk h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+  .desk p { margin: 0.2rem 0 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .desk .hours { font-family: var(--data); font-size: 0.78rem; color: var(--ink-soft); white-space: nowrap; }
+  @media (max-width: 36rem) {
+    .desk { grid-template-columns: 1fr; gap: 0.25rem; }
+    .desk .hours { white-space: normal; }
+  }
+
+  .notice {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 1.25rem;
+    padding: 1.15rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .notice:first-of-type { border-top: 1px solid var(--rule); }
+  .notice .ref { font-family: var(--data); font-size: 0.72rem; letter-spacing: 0.08em; color: var(--ink-soft); padding-top: 0.15rem; }
+  .notice h3 { margin: 0 0 0.25rem; font-size: 1.02rem; font-weight: 600; }
+  .notice p { margin: 0; font-size: 0.92rem; color: var(--ink-soft); }
+  @media (max-width: 36rem) { .notice { grid-template-columns: 1fr; gap: 0.3rem; } }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--data);
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.15rem 0.45rem;
+    margin-left: 0.5rem;
+    vertical-align: 0.12em;
+    border: 1px solid currentColor;
+    color: var(--accent);
+  }
+  .tag.pending { color: var(--signal); }
+
+  footer {
+    margin-top: 3.5rem;
+    padding-top: 1.25rem;
+    border-top: 3px double var(--rule);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+  }
+  footer p { margin: 0 0 0.4rem; max-width: 42rem; }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <svg class="seal" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="47" fill="none" stroke="var(--accent)" stroke-width="1.5"/>
+      <circle cx="50" cy="50" r="42" fill="none" stroke="var(--accent)" stroke-width="0.6"/>
+      <g class="beam" opacity="0.75">
+        <path d="M50 50 L92 42 L92 58 Z" fill="var(--accent)" opacity="0.28"/>
+      </g>
+      <path d="M50 26 L56 44 L44 44 Z" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <rect x="44" y="44" width="12" height="22" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+      <circle cx="50" cy="38" r="2.6" fill="var(--signal)"/>
+      <path d="M26 70 q12 -6 24 0 t24 0" fill="none" stroke="var(--accent)" stroke-width="1.4"/>
+      <path d="M26 77 q12 -6 24 0 t24 0" fill="none" stroke="var(--accent)" stroke-width="1.4" opacity="0.6"/>
+    </svg>
+    <div>
+      <div class="eyebrow">Chartered by those present</div>
+      <h1>The Office of Seaveland</h1>
+      <p>Passports, fishing licences, and the conditions board.</p>
+    </div>
+  </header>
+
+  <nav class="jump">
+    <a href="#passport">Passport</a>
+    <a href="#licence">Fishing licence</a>
+    <a href="#register">Register</a>
+    <a href="#desks">Desks</a>
+    <a href="#notices">Notices</a>
+  </nav>
+
+  <div class="board">
+    <div class="board-head">
+      <strong>Conditions</strong>
+      <span class="stamp" id="stamp">reading&hellip;</span>
+    </div>
+    <dl class="readouts">
+      <div class="readout">
+        <dt>Air</dt>
+        <dd id="r-air">&mdash;</dd>
+        <small id="r-air-note">&mdash;</small>
+      </div>
+      <div class="readout">
+        <dt>Humidity</dt>
+        <dd id="r-hum">&mdash;</dd>
+        <small id="r-hum-note">&mdash;</small>
+      </div>
+      <div class="readout">
+        <dt>Pond</dt>
+        <dd id="r-pond">&mdash;</dd>
+        <small id="r-pond-note">&mdash;</small>
+      </div>
+      <div class="readout">
+        <dt id="r-sun-label">Sun</dt>
+        <dd id="r-sun">&mdash;</dd>
+        <small id="r-sun-note">&mdash;</small>
+      </div>
+    </dl>
+    <canvas id="water-line" aria-label="Animated water line"></canvas>
+    <div class="board-foot">
+      <span class="lbl">Pond</span>
+      <span>Under construction, and not for much longer. Reading is of the water it will hold; licences naming it are approved now and honoured from the day it fills.</span>
+    </div>
+  </div>
+
+  <!-- ============ passport ============ -->
+
+  <section id="passport">
+    <div class="eyebrow">Application &mdash; Form P/1</div>
+    <h2>Apply for a Seaveland passport</h2>
+    <p class="lede">Fill the form and send the application to the President. <strong>Nothing is issued until it comes back approved.</strong> Everything stays in your own browser &mdash; no server, no account, and the photograph never leaves your device except inside the code you choose to send.</p>
+
+    <details class="signin" id="p-signin">
+      <summary>Already have a passport? Sign in on this device</summary>
+      <div class="inner">
+        <div class="field">
+          <label for="p-signin-code">Passport number, or a passport code</label>
+          <textarea id="p-signin-code" class="code" rows="2" placeholder="SVL-000000 &mdash; or paste a long code from your other device"></textarea>
+          <div class="actions">
+            <button class="issue" type="button" id="p-signin-go">Sign in</button>
+            <span class="note" id="p-signin-note"></span>
+          </div>
+          <div class="hint">Your <strong>number</strong> works on any device that already knows you &mdash; the President's, or one that has opened a register link. On a device that has never heard of Seaveland, use a <strong>passport code</strong>: open your passport on a device that has it and press &ldquo;Carry to another device&rdquo;.</div>
+        </div>
+      </div>
+    </details>
+
+    <div class="app">
+      <form class="form" id="p-form" novalidate>
+        <div class="field">
+          <label for="p-name">Name as it should appear</label>
+          <input type="text" id="p-name" autocomplete="off" maxlength="40" placeholder="Given and family name">
+        </div>
+        <div class="field">
+          <label for="p-title">Title held</label>
+          <input type="text" id="p-title" autocomplete="off" maxlength="40" placeholder="e.g. Keeper of the Greenhouse">
+          <div class="hint">Joke titles are accepted and, once issued, technically real.</div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="p-known">Known as</label>
+            <input type="text" id="p-known" autocomplete="off" maxlength="24" placeholder="Handle or nickname">
+          </div>
+          <div class="field">
+            <label for="p-mark">Distinguishing mark</label>
+            <input type="text" id="p-mark" autocomplete="off" maxlength="34" placeholder="Anything true">
+          </div>
+        </div>
+        <div class="field">
+          <label for="p-first">First visit</label>
+          <input type="text" id="p-first" autocomplete="off" maxlength="24" placeholder="A year, a season, or 'always'">
+        </div>
+        <div class="field">
+          <span class="flabel">Photograph</span>
+          <div class="mugrow">
+            <div class="mug" id="p-mug" hidden></div>
+            <label class="filebtn" for="p-photo">
+              <span id="p-photo-label">Attach a photograph</span>
+              <input type="file" id="p-photo" accept="image/*">
+            </label>
+          </div>
+          <div class="hint">Optional. A small copy travels with the application so the Office can put a face to the name.</div>
+        </div>
+        <button class="issue" type="submit" id="p-submit">Send for approval</button>
+      </form>
+
+      <div>
+        <div id="p-empty" class="doc-empty">No passport issued</div>
+
+        <div class="pending" id="p-pending" hidden>
+          <div class="pending-head">
+            <span class="pill flagged">Awaiting the President</span>
+            <span class="note" id="p-pending-when">&mdash;</span>
+          </div>
+          <dl class="facts">
+            <div><dt>Name</dt><dd id="p-p-name">&mdash;</dd></div>
+            <div><dt>Title claimed</dt><dd id="p-p-title">&mdash;</dd></div>
+            <div><dt>Known as</dt><dd id="p-p-known">&mdash;</dd></div>
+          </dl>
+          <div class="field">
+            <label for="p-code">Application code</label>
+            <textarea id="p-code" class="code" readonly rows="3"></textarea>
+            <div class="actions">
+              <button class="minor" type="button" id="p-copy">Copy code</button>
+              <button class="issue" type="button" id="p-selfapprove" hidden>Approve as President</button>
+              <button class="minor warn" type="button" id="p-withdraw">Withdraw</button>
+            </div>
+            <div class="hint">Send this to the President. It is long because the photograph is inside it.</div>
+          </div>
+          <div class="field">
+            <label for="p-approval">The Office's answer</label>
+            <textarea id="p-approval" class="code" rows="2" placeholder="Paste the code that comes back"></textarea>
+            <div class="actions">
+              <button class="issue" type="button" id="p-redeem">Enter the answer</button>
+              <span class="note" id="p-redeem-note"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc" id="p-doc" hidden>
+          <div class="doc-head">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="var(--gold)" stroke-width="2"/>
+              <path d="M50 28 L57 47 L43 47 Z" fill="none" stroke="var(--gold)" stroke-width="2"/>
+              <rect x="43" y="47" width="14" height="22" fill="none" stroke="var(--gold)" stroke-width="2"/>
+              <path d="M24 74 q13 -7 26 0 t26 0" fill="none" stroke="var(--gold)" stroke-width="2"/>
+            </svg>
+            <div>
+              <div class="kind">Seaveland &middot; Passport</div>
+              <div class="who" id="p-who">&mdash;</div>
+            </div>
+          </div>
+          <div class="doc-body">
+            <div class="photo" id="p-photo-box"><span>No photograph attached</span></div>
+            <dl class="doc-fields">
+              <div><dt>Status</dt><dd id="p-status">Visitor</dd></div>
+              <div><dt>Passport no.</dt><dd id="p-no">&mdash;</dd></div>
+              <div><dt>Known as</dt><dd id="p-known-out">&mdash;</dd></div>
+              <div><dt>First visit</dt><dd id="p-first-out">&mdash;</dd></div>
+              <div class="wide"><dt>Title held</dt><dd id="p-title-out">&mdash;</dd></div>
+              <div class="wide"><dt>Distinguishing mark</dt><dd id="p-mark-out">&mdash;</dd></div>
+              <div><dt>Issued</dt><dd id="p-issued">&mdash;</dd></div>
+              <div><dt>Expires</dt><dd id="p-expires">&mdash;</dd></div>
+              <div class="wide"><dt>Approved by</dt><dd id="p-approved">&mdash;</dd></div>
+            </dl>
+          </div>
+          <div class="mrz" id="p-mrz">&mdash;</div>
+        </div>
+
+        <div class="doc-actions" id="p-actions" hidden>
+          <button class="minor" type="button" id="p-save">Save as image</button>
+          <button class="minor" type="button" id="p-carry">Carry to another device</button>
+          <button class="minor warn" type="button" id="p-revoke">Surrender passport</button>
+          <span class="note" id="p-note"></span>
+        </div>
+
+        <div class="field" id="p-carry-wrap" hidden style="margin-top: 1rem;">
+          <label for="p-carry-code">Passport code</label>
+          <textarea id="p-carry-code" class="code" readonly rows="3"></textarea>
+          <div class="actions">
+            <button class="minor" type="button" id="p-carry-copy">Copy code</button>
+            <span class="note" id="p-carry-note"></span>
+          </div>
+          <div class="hint">Anyone holding this code becomes you on their device. Send it to yourself, not to the group chat.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ licence ============ -->
+
+  <section id="licence">
+    <div class="eyebrow">Application &mdash; Form F/2</div>
+    <h2>Apply for a fishing licence</h2>
+    <p class="lede">A licence is endorsed onto a passport the Office has already issued, and it goes the same way round: apply, send the code, wait for the President.</p>
+
+    <div class="app">
+      <form class="form" id="f-form" novalidate>
+        <div class="gate" id="f-gate" hidden>No passport on file. Get one issued first &mdash; the licence is endorsed onto it.</div>
+        <div class="field">
+          <label for="f-holder">Holder</label>
+          <input type="text" id="f-holder" autocomplete="off" readonly placeholder="Taken from your passport">
+          <div class="hint">Carried across from your passport. It cannot be changed here.</div>
+        </div>
+        <div class="field">
+          <label for="f-class">Class of licence</label>
+          <select id="f-class">
+            <option>Rod and line</option>
+            <option>Handline</option>
+            <option>Net, small</option>
+            <option>Bare hands (Class III)</option>
+            <option>Feeding only</option>
+            <option>Observation only</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-waters">Waters permitted</label>
+          <select id="f-waters">
+            <option>Greenhouse tank</option>
+            <option>The pond</option>
+            <option>All Seaveland waters</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-target">Declared quarry</label>
+          <input type="text" id="f-target" autocomplete="off" maxlength="34" placeholder="What you say you are after">
+        </div>
+        <button class="issue" type="submit" id="f-submit">Send for approval</button>
+      </form>
+
+      <div>
+        <div id="f-empty" class="doc-empty">No licence issued</div>
+
+        <div class="pending" id="f-pending" hidden>
+          <div class="pending-head">
+            <span class="pill flagged">Awaiting the President</span>
+            <span class="note" id="f-pending-when">&mdash;</span>
+          </div>
+          <dl class="facts">
+            <div><dt>Applicant</dt><dd id="f-p-holder">&mdash;</dd></div>
+            <div><dt>Passport</dt><dd id="f-p-passport">&mdash;</dd></div>
+            <div><dt>Class</dt><dd id="f-p-class">&mdash;</dd></div>
+            <div><dt>Waters</dt><dd id="f-p-waters">&mdash;</dd></div>
+          </dl>
+          <div class="field">
+            <label for="f-code">Application code</label>
+            <textarea id="f-code" class="code" readonly rows="3"></textarea>
+            <div class="actions">
+              <button class="minor" type="button" id="f-copy">Copy code</button>
+              <button class="issue" type="button" id="f-selfapprove" hidden>Approve as President</button>
+              <button class="minor warn" type="button" id="f-withdraw">Withdraw</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-approval">The Office's answer</label>
+            <textarea id="f-approval" class="code" rows="2" placeholder="Paste the code that comes back"></textarea>
+            <div class="actions">
+              <button class="issue" type="button" id="f-redeem">Enter the answer</button>
+              <span class="note" id="f-redeem-note"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc licence" id="f-doc" hidden>
+          <div class="doc-head">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <circle cx="50" cy="50" r="46" fill="none" stroke="#e6a94f" stroke-width="2"/>
+              <path d="M22 52 q16 -18 34 0 t22 -2" fill="none" stroke="#e6a94f" stroke-width="2"/>
+              <path d="M56 52 q-16 18 -34 0" fill="none" stroke="#e6a94f" stroke-width="2"/>
+              <circle cx="33" cy="46" r="2.2" fill="#e6a94f"/>
+            </svg>
+            <div>
+              <div class="kind">Seaveland &middot; Fishing Licence</div>
+              <div class="who" id="f-who">&mdash;</div>
+            </div>
+          </div>
+          <div class="doc-body">
+            <dl class="doc-fields">
+              <div><dt>Licence no.</dt><dd id="f-no">&mdash;</dd></div>
+              <div><dt>Endorsed on</dt><dd id="f-endorsed">&mdash;</dd></div>
+              <div><dt>Class</dt><dd id="f-class-out">&mdash;</dd></div>
+              <div><dt>Waters</dt><dd id="f-waters-out">&mdash;</dd></div>
+              <div><dt>Declared quarry</dt><dd id="f-target-out">&mdash;</dd></div>
+              <div><dt>Valid until</dt><dd id="f-valid">&mdash;</dd></div>
+              <div class="wide"><dt>Approved by</dt><dd id="f-approved">&mdash;</dd></div>
+              <div class="wide"><dt>Condition</dt><dd>Everything caught goes back in the water. Catches are reported at the counter and will be doubted.</dd></div>
+            </dl>
+          </div>
+          <div class="mrz" id="f-mrz">&mdash;</div>
+        </div>
+
+        <div class="doc-actions" id="f-actions" hidden>
+          <button class="minor" type="button" id="f-save">Save as image</button>
+          <button class="minor warn" type="button" id="f-revoke">Surrender licence</button>
+          <span class="note" id="f-note"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ register ============ -->
+
+  <section id="register">
+    <div class="eyebrow">Register &mdash; Form F/3</div>
+    <h2>Check a record</h2>
+    <p class="lede">Enter a passport or licence number and the Office reads out what is against it. Anyone may check anyone; the register is not private, that is rather the point of it.</p>
+
+    <form class="lookup" id="v-form" novalidate>
+      <div class="field">
+        <label for="v-no">Passport or licence number</label>
+        <input type="text" id="v-no" autocomplete="off" maxlength="16" placeholder="SVL-000000 or FSH-000000">
+      </div>
+      <button class="issue" type="submit">Check record</button>
+    </form>
+
+    <div class="record" id="v-record" hidden>
+      <div class="record-head">
+        <div class="who">
+          <div class="mug" id="v-mug" hidden></div>
+          <div>
+            <div class="no" id="v-no-out">&mdash;</div>
+            <div class="holder" id="v-holder-out">&mdash;</div>
+          </div>
+        </div>
+        <span class="pill clear" id="v-pill">Clear</span>
+      </div>
+      <div id="v-list"></div>
+    </div>
+
+    <!-- the Office -->
+    <div class="office">
+      <div class="office-bar">
+        <span class="title">The Office</span>
+        <span class="president" id="o-president">Locked</span>
+      </div>
+
+      <div class="pane" id="o-locked">
+        <p class="note">This side of the counter belongs to the President. Approvals and violations are recorded here, and one passport number opens it.</p>
+        <div class="field">
+          <label for="o-key">President's passport number</label>
+          <input type="text" id="o-key" autocomplete="off" maxlength="16" placeholder="SVL-000000">
+        </div>
+        <div class="actions">
+          <button class="issue" type="button" id="o-unlock">Unlock</button>
+          <span class="note" id="o-key-note"></span>
+        </div>
+      </div>
+
+      <div id="o-unlocked" hidden>
+        <div class="tabs" role="tablist">
+          <button type="button" role="tab" id="tab-apps" aria-selected="true" aria-controls="pane-apps">Applications</button>
+          <button type="button" role="tab" id="tab-people" aria-selected="false" aria-controls="pane-people">People</button>
+          <button type="button" role="tab" id="tab-viol" aria-selected="false" aria-controls="pane-viol">Violations</button>
+        </div>
+
+        <div class="pane" id="pane-apps" role="tabpanel" aria-labelledby="tab-apps">
+          <div class="field">
+            <label for="o-app">Application code</label>
+            <textarea id="o-app" class="code" rows="3" placeholder="Paste the code an applicant sent you"></textarea>
+            <div class="actions">
+              <button class="issue" type="button" id="o-read">Read application</button>
+              <span class="note" id="o-app-note"></span>
+            </div>
+          </div>
+          <div id="o-app-panel" hidden>
+            <div class="mugrow" style="margin-bottom: 0.9rem;">
+              <div class="mug" id="o-app-mug" hidden></div>
+              <dl class="facts" id="o-app-facts" style="flex: 1 1 16rem;"></dl>
+            </div>
+            <div class="actions">
+              <button class="issue" type="button" id="o-approve">Approve</button>
+              <button class="minor warn" type="button" id="o-refuse">Refuse</button>
+            </div>
+          </div>
+          <div class="field" id="o-answer-wrap" hidden>
+            <label for="o-answer">Send this back</label>
+            <textarea id="o-answer" class="code" readonly rows="2"></textarea>
+            <div class="actions">
+              <button class="minor" type="button" id="o-copy-answer">Copy answer</button>
+              <span class="note" id="o-answer-note"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pane" id="pane-people" role="tabpanel" aria-labelledby="tab-people" hidden>
+          <p class="note" id="o-people-note">Everyone the Office has issued to, kept on this device.</p>
+          <div id="o-people"></div>
+          <div class="field subrule" style="padding-top: 1.05rem;">
+            <label for="o-share">Register link</label>
+            <input type="text" id="o-share" readonly placeholder="Build a link to hand the register to someone">
+            <div class="actions">
+              <button class="minor" type="button" id="o-build">Build register link</button>
+              <button class="minor warn" type="button" id="o-lock">Lock the Office</button>
+            </div>
+            <div class="note" id="o-share-note">The register lives in this browser. A link is the only way it reaches another device.</div>
+          </div>
+        </div>
+
+        <div class="pane" id="pane-viol" role="tabpanel" aria-labelledby="tab-viol" hidden>
+          <div class="field">
+            <label for="o-who">Who</label>
+            <select id="o-who"></select>
+            <div class="hint" id="o-who-hint">Anyone the Office has issued a licence to.</div>
+          </div>
+          <div class="field">
+            <label for="o-offence">Offence</label>
+            <select id="o-offence">
+              <option>Fishing without a licence</option>
+              <option>Fishing outside the declared quarry</option>
+              <option>Fishing waters the licence does not cover</option>
+              <option>Removing a fish from the water</option>
+              <option>Feeding the fish twice</option>
+              <option>Bare hands, unlicensed</option>
+              <option>Interfering with the pump</option>
+              <option>Failure to report a catch</option>
+              <option>Reporting a catch that did not happen</option>
+              <option>Loitering in the greenhouse</option>
+              <option>Conduct unbecoming of a visitor</option>
+              <option>Other (state below)</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label for="o-penalty">Penalty</label>
+              <select id="o-penalty">
+                <option>Noted</option>
+                <option>Warning</option>
+                <option>Formal warning</option>
+                <option>Suspended, 1 week</option>
+                <option>Suspended, indefinitely</option>
+                <option>Licence revoked</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="o-particulars">Particulars</label>
+              <input type="text" id="o-particulars" autocomplete="off" maxlength="60" placeholder="What actually happened">
+            </div>
+          </div>
+          <div class="actions">
+            <button class="issue" type="button" id="o-record">Record it</button>
+            <button class="minor warn" type="button" id="o-wipe">Wipe their record</button>
+            <span class="note" id="o-viol-note"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ desks ============ -->
+
+  <section id="desks">
+    <div class="eyebrow">Who to ask</div>
+    <h2>Desks of the Office</h2>
+    <p class="lede">One counter, four desks, and a bell you may ring exactly once.</p>
+    <div class="desks">
+      <div class="desk">
+        <div class="room">Desk 1</div>
+        <div>
+          <h3>Passports</h3>
+          <p>Takes applications, puts them in front of the President, and issues what comes back approved.</p>
+        </div>
+        <div class="hours">While anyone is here</div>
+      </div>
+      <div class="desk">
+        <div class="room">Desk 2</div>
+        <div>
+          <h3>Waters &amp; Enforcement</h3>
+          <p>Licences, rulings on whether what you caught counts, and the register of everyone it did not count for.</p>
+        </div>
+        <div class="hours">Daylight</div>
+      </div>
+      <div class="desk">
+        <div class="room">Desk 3</div>
+        <div>
+          <h3>Greenhouse</h3>
+          <p>Pumps, plants and pH. The tank is held at 26&deg; whatever the sky is doing, which is why it is not on the board. Also the pond works, until the pond stops being works and starts being a pond.</p>
+        </div>
+        <div class="hours">Mornings, before the heat</div>
+      </div>
+      <div class="desk">
+        <div class="room">Back of the shelf</div>
+        <div>
+          <h3>Lost Property</h3>
+          <p>Everything left behind ends up here eventually. Nothing is ever thrown out and nothing is ever labelled.</p>
+        </div>
+        <div class="hours">Ask at the counter</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ notices ============ -->
+
+  <section id="notices">
+    <div class="eyebrow">Bulletin</div>
+    <h2>Standing notices</h2>
+
+    <article class="notice">
+      <div class="ref">N/01</div>
+      <div>
+        <h3>Every document comes from the President<span class="tag">Standing</span></h3>
+        <p>Passports and licences are applied for, not taken. Nothing is valid until the President has seen it and said so, and every document carries the number of the passport that approved it.</p>
+      </div>
+    </article>
+
+    <article class="notice">
+      <div class="ref">N/02</div>
+      <div>
+        <h3>Titles are honoured once issued<span class="tag">Standing</span></h3>
+        <p>A title written on a passport is a joke and is also, from the moment of issue, technically real. The Office does not consider these positions to be in conflict.</p>
+      </div>
+    </article>
+
+    <article class="notice">
+      <div class="ref">N/03</div>
+      <div>
+        <h3>The pond is under construction<span class="tag pending">Works</span></h3>
+        <p>Not for much longer. Licences naming the pond are approved now and valid from the day it holds water, which is how most things here work.</p>
+      </div>
+    </article>
+
+    <article class="notice">
+      <div class="ref">N/04</div>
+      <div>
+        <h3>The violations register is public<span class="tag">Standing</span></h3>
+        <p>Anyone may look up any number. Entries are made by the President alone, disputed at the counter, and occasionally wiped for reasons the Office declines to give.</p>
+      </div>
+    </article>
+
+    <article class="notice">
+      <div class="ref">N/05</div>
+      <div>
+        <h3>Bylaws and traditions &mdash; compilation in progress<span class="tag pending">Pending</span></h3>
+        <p>The rules, the traditions, the banned things and the things that always happen are being written down as they are remembered. This notice will be replaced by the list.</p>
+      </div>
+    </article>
+
+    <article class="notice">
+      <div class="ref">N/06</div>
+      <div>
+        <h3>The location of Seaveland is not published<span class="tag">Standing</span></h3>
+        <p>Not on this site, not on the passport, not at the counter. If you have to ask where it is, you were not going to be there anyway.</p>
+      </div>
+    </article>
+  </section>
+
+  <footer>
+    <p><strong>Seaveland is not a country and this is not a government.</strong> The passports and licences here are novelty documents, generated in your browser, valid nowhere, and recognised by nobody except the people who already know what Seaveland is.</p>
+    <p>Conditions are modelled from local climate records for the date and hour, not measured at the property. Documents and the register are held in this browser only &mdash; nothing is sent to a server, and a code or a link is the only way one device tells another anything.</p>
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    "use strict";
+
+    var $ = function (id) { return document.getElementById(id); };
+    function two(n) { return String(n).padStart(2, "0"); }
+    function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+    function value(id) { return $(id).value.trim(); }
+
+    /* ================= conditions =================
+       Modelled on published climate normals for the region: monthly mean
+       high/low, mean relative humidity, and a solar calculation for the
+       local latitude. No network, no sensors \u2014 the board reads what a
+       normal day of this date and hour looks like. */
+
+    var LAT = 26.07, LON = 50.55, TZ = 3;
+
+    var NORMALS = [
+      { hi: 20.1, lo: 14.2, hum: 72 },
+      { hi: 21.4, lo: 14.9, hum: 70 },
+      { hi: 24.9, lo: 17.4, hum: 66 },
+      { hi: 29.6, lo: 21.2, hum: 60 },
+      { hi: 34.6, lo: 25.6, hum: 54 },
+      { hi: 37.1, lo: 28.5, hum: 55 },
+      { hi: 38.0, lo: 30.4, hum: 57 },
+      { hi: 38.1, lo: 30.2, hum: 62 },
+      { hi: 36.1, lo: 27.9, hum: 64 },
+      { hi: 33.0, lo: 24.9, hum: 66 },
+      { hi: 27.8, lo: 20.8, hum: 70 },
+      { hi: 22.4, lo: 16.3, hum: 73 }
+    ];
+
+    var utcNow = new Date();
+    var local = new Date(utcNow.getTime() + (TZ * 60 + utcNow.getTimezoneOffset()) * 60000);
+    var hourOfDay = local.getHours() + local.getMinutes() / 60;
+
+    function normal(key) {
+      var m = local.getMonth();
+      var frac = (local.getDate() - 1) / 30 - 0.5;
+      var other = frac < 0 ? (m + 11) % 12 : (m + 1) % 12;
+      var w = Math.abs(frac);
+      return NORMALS[m][key] * (1 - w) + NORMALS[other][key] * w;
+    }
+
+    /* warmest around 15:00, coolest around 05:00 */
+    function diurnal(h) {
+      if (h >= 5 && h <= 15) { return 0.5 - 0.5 * Math.cos(Math.PI * (h - 5) / 10); }
+      var hh = h < 5 ? h + 24 : h;
+      return 0.5 + 0.5 * Math.cos(Math.PI * (hh - 15) / 14);
+    }
+
+    var hi = normal("hi"), lo = normal("lo");
+    var warmth = diurnal(hourOfDay);
+    var air = lo + (hi - lo) * warmth;
+    var humidity = clamp(normal("hum") + (0.5 - warmth) * 22, 20, 96);
+
+    /* the pond is outside and open to the sky: water lags the air by a few
+       hours and swings far less, so it reads warm at dawn, cool at four */
+    var pondSwing = diurnal((hourOfDay - 3 + 24) % 24) - 0.5;
+    var pond = clamp((hi + lo) / 2 + (hi - lo) * pondSwing * 0.35 + 1.2, 8, 40);
+
+    var feels = air + (humidity > 60 && air > 26 ? (humidity - 60) * 0.09 * (air - 26) * 0.25 : 0);
+
+    function sunTimes() {
+      var start = new Date(local.getFullYear(), 0, 0);
+      var n = Math.floor((local - start) / 86400000);
+      var B = 2 * Math.PI * (n - 81) / 364;
+      var eot = 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
+      var decl = 0.409 * Math.sin(2 * Math.PI / 365 * (n - 81));
+      var latR = LAT * Math.PI / 180;
+      var cosH = (Math.sin(-0.0145) - Math.sin(latR) * Math.sin(decl)) / (Math.cos(latR) * Math.cos(decl));
+      var H = Math.acos(clamp(cosH, -1, 1)) * 180 / Math.PI;
+      var noon = 12 + (TZ * 15 - LON) / 15 - eot / 60;
+      return { rise: noon - H / 15, set: noon + H / 15 };
+    }
+
+    function hhmm(hours) {
+      var h = Math.floor(hours);
+      var m = Math.round((hours - h) * 60);
+      if (m === 60) { h += 1; m = 0; }
+      return two((h + 24) % 24) + ":" + two(m);
+    }
+
+    function gap(hours) {
+      var mins = Math.round(hours * 60);
+      return Math.floor(mins / 60) + "h " + two(mins % 60) + "m";
+    }
+
+    var sun = sunTimes();
+    var daylight = hourOfDay >= sun.rise && hourOfDay < sun.set;
+
+    $("r-air").textContent = air.toFixed(1) + "\u00b0";
+    $("r-air-note").textContent = feels - air > 0.8
+      ? "Feels like " + feels.toFixed(0) + "\u00b0 in the damp"
+      : (warmth > 0.5 ? "Still climbing" : "Cooling off");
+    $("r-hum").textContent = Math.round(humidity) + "%";
+    $("r-hum-note").textContent = humidity > 75 ? "Heavy \u2014 vents open"
+      : humidity > 55 ? "Close, but manageable" : "Dry for here";
+    $("r-pond").textContent = pond.toFixed(1) + "\u00b0";
+    $("r-pond-note").textContent = pond > air + 0.6 ? "Holding last night's heat"
+      : pond < air - 0.6 ? "Behind the air, as water is" : "Level with the air";
+    $("r-sun-label").textContent = daylight ? "Sunset" : "Sunrise";
+    $("r-sun").textContent = daylight ? hhmm(sun.set) : hhmm(sun.rise);
+    $("r-sun-note").textContent = daylight
+      ? gap(sun.set - hourOfDay) + " of daylight left"
+      : "Up " + gap(sun.rise - hourOfDay + (hourOfDay > sun.set ? 24 : 0)) + " from now";
+    $("stamp").textContent = "Board set " + hhmm(hourOfDay) + " local, " +
+      local.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
+    /* ================= water line ================= */
+
+    var canvas = $("water-line");
+    var ctx = canvas.getContext("2d");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var w = 0, h = 0;
+
+    function resize() {
+      var dpr = window.devicePixelRatio || 1;
+      w = canvas.clientWidth;
+      h = canvas.clientHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function css(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function wave(t, amp, speed, base, color, alpha) {
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for (var x = 0; x <= w; x += 4) {
+        var y = base + Math.sin(x / 110 + t * speed) * amp + Math.sin(x / 47 - t * speed * 1.7) * amp * 0.4;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    function frame(ms) {
+      var t = reduce ? 0 : ms / 1000;
+      ctx.clearRect(0, 0, w, h);
+      wave(t, 5, 0.4, h * 0.46, css("--sea-far"), 0.45);
+      wave(t + 3, 7, 0.56, h * 0.64, css("--sea-near"), 0.3);
+      wave(t + 7, 4, 0.78, h * 0.82, css("--sea-near"), 0.55);
+      if (!reduce) { requestAnimationFrame(frame); }
+    }
+
+    resize();
+    window.addEventListener("resize", function () { resize(); if (reduce) { frame(0); } });
+    requestAnimationFrame(frame);
+
+    /* ================= storage ================= */
+
+    var STORE_P = "svl.passport.v2";      /* this device's passport */
+    var STORE_PAPP = "svl.p-application.v2";
+    var STORE_F = "svl.licence.v2";       /* this device's licence */
+    var STORE_FAPP = "svl.f-application.v2";
+    var STORE_KEY = "svl.office.v2";      /* office unlocked on this device */
+    var STORE_PEOPLE = "svl.people.v2";   /* everyone the Office remembers */
+
+    /* One passport runs Seaveland. Holding this number is what admits you to
+       the Office, and it is the number the President's own passport is issued
+       under, however many times it is applied for. */
+    var PRESIDENT_NO = "SVL-YEXN2I";
+
+    /* Every passport this browser has ever held is kept here as well as in
+       the live slot, so a document is never lost to a rewrite, a surrender,
+       or a change of mind. Nothing is ever removed from it. */
+    var STORE_ARCHIVE = "svl.archive.v2";
+
+    function load(key) {
+      try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; }
+    }
+    function save(key, v) {
+      try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* private mode */ }
+    }
+    function drop(key) {
+      try { localStorage.removeItem(key); } catch (e) { /* private mode */ }
+    }
+
+    function loadArchive() {
+      var all = load(STORE_ARCHIVE);
+      return (all && typeof all === "object") ? all : {};
+    }
+
+    /* the only two ways a document is written, so the archive cannot miss one */
+    function keepPassport(p) {
+      save(STORE_P, p);
+      if (!p || !p.no) { return; }
+      var all = loadArchive();
+      var kept = all[p.no] || {};
+      kept.p = p;
+      kept.savedAt = new Date().toISOString();
+      all[p.no] = kept;
+      save(STORE_ARCHIVE, all);
+    }
+
+    function keepLicence(f) {
+      if (f) { save(STORE_F, f); } else { drop(STORE_F); }
+      if (!f || !f.passportNo) { return; }
+      var all = loadArchive();
+      var kept = all[f.passportNo] || {};
+      kept.f = f;
+      kept.savedAt = new Date().toISOString();
+      all[f.passportNo] = kept;
+      save(STORE_ARCHIVE, all);
+    }
+
+    /* the newest thing the archive holds, for when the live slot is empty */
+    function newestKept() {
+      var all = loadArchive();
+      var best = null;
+      Object.keys(all).forEach(function (no) {
+        var kept = all[no];
+        if (!kept || !kept.p || kept.surrendered) { return; }
+        if (!best || new Date(kept.savedAt) > new Date(best.savedAt)) { best = kept; }
+      });
+      return best;
+    }
+
+    function hash(str) {
+      var n = 2166136261;
+      for (var i = 0; i < str.length; i++) {
+        n ^= str.charCodeAt(i);
+        n = (n * 16777619) >>> 0;
+      }
+      return n;
+    }
+
+    function docNumber(prefix, seed) {
+      var n = hash(seed).toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "");
+      return prefix + "-" + (n + "000000").slice(0, 6);
+    }
+
+    function fmtDate(iso) {
+      return new Date(iso).toLocaleDateString(undefined, {
+        day: "2-digit", month: "short", year: "numeric"
+      }).toUpperCase();
+    }
+
+    function plusYears(iso, years) {
+      var d = new Date(iso);
+      d.setFullYear(d.getFullYear() + years);
+      return d.toISOString();
+    }
+
+    function mrzPad(str, len) {
+      var clean = (str || "").toUpperCase().replace(/[^A-Z0-9]+/g, "<");
+      return (clean + new Array(len + 1).join("<")).slice(0, len);
+    }
+
+    function normaliseNo(str) {
+      return (str || "").trim().toUpperCase().replace(/\s+/g, "");
+    }
+
+    /* The President's number is the key to the Office, so it is never printed
+       at rest. It shows as dots wherever it appears and uncovers on a click. */
+    var PRESIDENT_MASK = "SVL-\u2022\u2022\u2022\u2022\u2022\u2022";
+
+    function maskedNumber(no) {
+      if (no !== PRESIDENT_NO) { return document.createTextNode(no || "\u2014"); }
+      var button = document.createElement("button");
+      button.type = "button";
+      button.className = "masked";
+      button.textContent = PRESIDENT_MASK;
+      button.title = "Show the President's number";
+      button.setAttribute("aria-label", "Show the President's passport number");
+      button.addEventListener("click", function () {
+        var shown = button.getAttribute("data-shown") === "1";
+        button.setAttribute("data-shown", shown ? "0" : "1");
+        button.textContent = shown ? PRESIDENT_MASK : PRESIDENT_NO;
+        button.title = shown ? "Show the President's number" : "Hide it again";
+      });
+      return button;
+    }
+
+    /* write a number into an element, dotted if it is the President's */
+    function putNumber(el, no, before, after) {
+      el.textContent = "";
+      if (before) { el.appendChild(document.createTextNode(before)); }
+      el.appendChild(maskedNumber(no));
+      if (after) { el.appendChild(document.createTextNode(after)); }
+    }
+
+    function maskInText(no) {
+      return no === PRESIDENT_NO ? PRESIDENT_MASK : no;
+    }
+
+    function pack(obj) {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(obj))))
+        .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    }
+
+    function unpack(str) {
+      try {
+        var b64 = String(str || "").trim().replace(/\s+/g, "").replace(/-/g, "+").replace(/_/g, "/");
+        while (b64.length % 4) { b64 += "="; }
+        var obj = JSON.parse(decodeURIComponent(escape(atob(b64))));
+        return (obj && typeof obj === "object") ? obj : null;
+      } catch (e) { return null; }
+    }
+
+    /* photographs are shrunk before they travel, so codes and links stay
+       something a person can actually paste into a message */
+    function thumbnail(dataUrl, cb) {
+      var img = new Image();
+      img.onload = function () {
+        var W = 108, H = 138;
+        var cv = document.createElement("canvas");
+        cv.width = W;
+        cv.height = H;
+        var c = cv.getContext("2d");
+        var ratio = Math.max(W / img.width, H / img.height);
+        var dw = img.width * ratio, dh = img.height * ratio;
+        c.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+        cb(cv.toDataURL("image/jpeg", 0.62));
+      };
+      img.onerror = function () { cb(null); };
+      img.src = dataUrl;
+    }
+
+    function paintMug(el, photo) {
+      el.textContent = "";
+      if (!photo) { el.hidden = true; return; }
+      var img = document.createElement("img");
+      img.src = photo;
+      img.alt = "Photograph on file";
+      el.appendChild(img);
+      el.hidden = false;
+    }
+
+    function fact(dl, term, detail) {
+      var wrap = document.createElement("div");
+      var dt = document.createElement("dt");
+      dt.textContent = term;
+      var dd = document.createElement("dd");
+      dd.textContent = detail;
+      wrap.appendChild(dt);
+      wrap.appendChild(dd);
+      dl.appendChild(wrap);
+    }
+
+    /* ================= the people the Office remembers ================= */
+
+    function loadPeople() {
+      var raw = load(STORE_PEOPLE);
+      return (raw && typeof raw === "object") ? raw : {};
+    }
+
+    function personOf(people, no) {
+      if (people[no]) { return no; }
+      var keys = Object.keys(people);
+      for (var i = 0; i < keys.length; i++) {
+        var licence = people[keys[i]].licence;
+        if (licence && normaliseNo(licence.no) === no) { return keys[i]; }
+      }
+      return null;
+    }
+
+    function rememberPassport(app, answer) {
+      var people = loadPeople();
+      var person = people[answer.no] || { violations: [] };
+      person.passport = answer.no;
+      person.name = app.name;
+      person.title = app.title || "";
+      person.known = app.known || "";
+      person.mark = app.mark || "";
+      person.first = app.first || "";
+      person.photo = app.photo || person.photo || null;
+      person.issued = answer.at;
+      person.violations = person.violations || [];
+      people[answer.no] = person;
+      save(STORE_PEOPLE, people);
+    }
+
+    function rememberLicence(app, answer) {
+      var people = loadPeople();
+      var person = people[app.passportNo] || { passport: app.passportNo, name: app.holder, violations: [] };
+      person.name = person.name || app.holder;
+      person.violations = person.violations || [];
+      person.licence = {
+        no: answer.no,
+        klass: app.klass,
+        waters: app.waters,
+        quarry: app.quarry || "",
+        approvedAt: answer.at
+      };
+      people[app.passportNo] = person;
+      save(STORE_PEOPLE, people);
+    }
+
+    var SUSPENDING = /revoked|suspended/i;
+
+    function standingOf(violations) {
+      if (!violations || !violations.length) { return { text: "Clear", flagged: false }; }
+      var worst = null;
+      for (var i = 0; i < violations.length; i++) {
+        if (SUSPENDING.test(violations[i].penalty)) { worst = violations[i].penalty; }
+      }
+      var count = violations.length + (violations.length === 1 ? " violation" : " violations");
+      return { text: worst ? worst + " \u2014 " + count : count, flagged: true };
+    }
+
+    /* ================= this device's passport ================= */
+
+    var passportPhoto = null;   /* full size, for the card */
+    var passportThumb = null;   /* small, for the application code */
+
+    $("p-photo").addEventListener("change", function (ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) { return; }
+      var reader = new FileReader();
+      reader.onload = function () {
+        passportPhoto = String(reader.result);
+        thumbnail(passportPhoto, function (small) {
+          passportThumb = small;
+          $("p-photo-label").textContent = "Photograph attached";
+          paintMug($("p-mug"), small || passportPhoto);
+          var held = load(STORE_P);
+          if (held) {
+            held.photo = passportPhoto;
+            keepPassport(held);
+            renderPassport(held);
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function passportMrz(p) {
+      var parts = p.name.split(/\s+/);
+      var family = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+      var given = parts.length > 1 ? parts.slice(0, -1).join("<") : "";
+      return [
+        "P<SVL" + mrzPad(family + "<<" + given, 39),
+        mrzPad(p.no, 10) + "SVL" + mrzPad(String(new Date(p.issued).getFullYear()), 6) +
+          "V" + mrzPad(p.known || p.title || "VISITOR", 19)
+      ];
+    }
+
+    function isPresident(p) {
+      return !!p && p.no === PRESIDENT_NO;
+    }
+
+    function renderPassport(p) {
+      $("p-doc").hidden = !p;
+      $("p-actions").hidden = !p;
+      $("p-empty").hidden = !!p || !!load(STORE_PAPP);
+      if (!p) { $("p-carry-wrap").hidden = true; return; }
+
+      $("p-who").textContent = p.name;
+      putNumber($("p-no"), p.no);
+      $("p-status").textContent = isPresident(p) ? "President" : "Visitor";
+      $("p-known-out").textContent = p.known || "\u2014";
+      $("p-first-out").textContent = p.first || "\u2014";
+      $("p-title-out").textContent = p.title || "None held";
+      $("p-mark-out").textContent = p.mark || "None recorded";
+      $("p-issued").textContent = fmtDate(p.issued);
+      $("p-expires").textContent = fmtDate(p.expires);
+      if (p.approvedBy === p.no) {
+        $("p-approved").textContent = "Their own hand, being the President";
+      } else {
+        putNumber($("p-approved"), p.approvedBy || "The Office");
+      }
+
+      var box = $("p-photo-box");
+      box.textContent = "";
+      if (p.photo) {
+        var img = document.createElement("img");
+        img.src = p.photo;
+        img.alt = "Passport photograph";
+        box.appendChild(img);
+      } else {
+        var span = document.createElement("span");
+        span.textContent = "No photograph attached";
+        box.appendChild(span);
+      }
+
+      $("p-mrz").textContent = passportMrz(p).join("\n");
+    }
+
+    function renderPassportPending(app) {
+      $("p-pending").hidden = !app;
+      if (!app) { return; }
+      $("p-empty").hidden = true;
+      $("p-p-name").textContent = app.name;
+      $("p-p-title").textContent = app.title || "None";
+      $("p-p-known").textContent = app.known || "\u2014";
+      $("p-pending-when").textContent = "Sent " + fmtDate(app.at);
+      $("p-code").value = pack(app);
+      $("p-selfapprove").hidden = !officeIsOpen();
+    }
+
+    $("p-form").addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var name = value("p-name");
+      if (!name) { $("p-name").focus(); return; }
+
+      var app = {
+        kind: "P",
+        name: name,
+        title: value("p-title"),
+        known: value("p-known"),
+        mark: value("p-mark"),
+        first: value("p-first"),
+        photo: passportThumb,
+        at: new Date().toISOString()
+      };
+      save(STORE_PAPP, app);
+      drop(STORE_P);
+      drop(STORE_F);
+      drop(STORE_FAPP);
+      renderPassport(null);
+      renderLicence(null);
+      renderLicencePending(null);
+      renderPassportPending(app);
+      syncLicenceGate(null);
+      $("p-redeem-note").textContent = "";
+
+      /* the President is the approval, so there is nobody to wait for */
+      if (officeIsOpen()) {
+        issuePresidentialPassport();
+        return;
+      }
+      $("p-pending").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+    });
+
+    function issuePresidentialPassport() {
+      var app = load(STORE_PAPP);
+      if (!app || !officeIsOpen()) { return; }
+      var at = new Date().toISOString();
+      var answer = { id: applicationId(app), ok: true, at: at, no: PRESIDENT_NO, by: PRESIDENT_NO };
+      rememberPassport(app, answer);
+      var problem = redeemPassport(pack(answer));
+      $("p-redeem-note").textContent = problem || "";
+      refreshOfficeChrome();
+      renderPeople();
+      fillWhoSelect();
+      if (!problem) { $("p-doc").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
+    }
+
+    function applicationId(app) {
+      return docNumber("APP", (app.kind || "P") + "|" + (app.passportNo || app.name) + "|" + app.at);
+    }
+
+    function copyInto(field, noteEl, done) {
+      field.focus();
+      field.select();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(field.value).then(function () {
+          noteEl.textContent = done;
+        }, function () {
+          noteEl.textContent = "Copy it from the box above.";
+        });
+      } else {
+        noteEl.textContent = "Copy it from the box above.";
+      }
+    }
+
+    $("p-copy").addEventListener("click", function () {
+      copyInto($("p-code"), $("p-redeem-note"), "Code copied. Send it to the President.");
+    });
+
+    $("p-withdraw").addEventListener("click", function () {
+      drop(STORE_PAPP);
+      renderPassportPending(null);
+      renderPassport(load(STORE_P));
+      $("p-redeem-note").textContent = "";
+    });
+
+    function redeemPassport(code) {
+      var app = load(STORE_PAPP);
+      if (!app) { return "There is no application waiting."; }
+
+      var answer = unpack(code);
+      if (!answer || !answer.id) { return "That is not an answer from the Office."; }
+      if (answer.id !== applicationId(app)) { return "That answer belongs to a different application."; }
+
+      if (!answer.ok) {
+        drop(STORE_PAPP);
+        renderPassportPending(null);
+        renderPassport(null);
+        return "Refused. The Office does not have to say why.";
+      }
+
+      var p = {
+        name: app.name,
+        title: app.title,
+        known: app.known,
+        mark: app.mark,
+        first: app.first,
+        photo: passportPhoto || app.photo || null,
+        no: answer.no,
+        issued: answer.at,
+        expires: plusYears(answer.at, 5),
+        approvedBy: answer.by
+      };
+      keepPassport(p);
+      drop(STORE_PAPP);
+      renderPassportPending(null);
+      renderPassport(p);
+      syncLicenceGate(p);
+      $("v-no").value = p.no;
+      return null;
+    }
+
+    $("p-redeem").addEventListener("click", function () {
+      var problem = redeemPassport($("p-approval").value);
+      $("p-redeem-note").textContent = problem || "";
+      if (!problem) { $("p-approval").value = ""; }
+    });
+
+    /* the President's own passport is the one document nobody else can
+       approve, so it approves itself and takes the office with it */
+    $("p-selfapprove").addEventListener("click", issuePresidentialPassport);
+
+    /* ---- carrying a passport to another device ----
+       No accounts, so the documents themselves travel. The code holds the
+       passport and any licence on it; the photograph goes across at the
+       small size so the code stays something you can paste. */
+
+    $("p-carry").addEventListener("click", function () {
+      var p = load(STORE_P);
+      if (!p) { return; }
+      var wrap = $("p-carry-wrap");
+
+      if (!wrap.hidden) {
+        wrap.hidden = true;
+        return;
+      }
+
+      function build(photo) {
+        var travelling = {
+          kind: "T",
+          p: {
+            name: p.name, title: p.title, known: p.known, mark: p.mark, first: p.first,
+            no: p.no, issued: p.issued, expires: p.expires, approvedBy: p.approvedBy,
+            photo: photo || null
+          },
+          f: load(STORE_F) || null
+        };
+        $("p-carry-code").value = pack(travelling);
+        wrap.hidden = false;
+        $("p-carry-note").textContent = "";
+      }
+
+      if (p.photo) { thumbnail(p.photo, build); } else { build(null); }
+    });
+
+    $("p-carry-copy").addEventListener("click", function () {
+      copyInto($("p-carry-code"), $("p-carry-note"), "Code copied. Send it to your other device.");
+    });
+
+    /* the two ways in: a number this browser already knows, or a code from
+       a device that holds the document itself */
+    function signIn(p, licence) {
+      keepPassport(p);
+      drop(STORE_PAPP);
+      drop(STORE_FAPP);
+      keepLicence(licence && licence.passportNo === p.no ? licence : null);
+
+      passportPhoto = p.photo || null;
+      passportThumb = p.photo || null;
+      if (p.photo) {
+        $("p-photo-label").textContent = "Photograph attached";
+        paintMug($("p-mug"), p.photo);
+      }
+      $("p-name").value = p.name || "";
+      $("p-title").value = p.title || "";
+      $("p-known").value = p.known || "";
+      $("p-mark").value = p.mark || "";
+      $("p-first").value = p.first || "";
+      $("p-signin-code").value = "";
+      $("v-no").value = p.no;
+
+      renderPassportPending(null);
+      renderPassport(p);
+      syncLicenceGate(p);
+      renderLicencePending(null);
+      renderLicence(load(STORE_F));
+      refreshOfficeChrome();
+      renderPeople();
+      fillWhoSelect();
+
+      $("p-signin-note").textContent = p.no === PRESIDENT_NO
+        ? "Welcome back. The Office is open on this device."
+        : "Signed in as " + p.name + ".";
+      $("p-signin").open = false;
+      $("p-doc").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+    }
+
+    /* Whichever box the President's number is typed into, the result is the
+       same: the Office opens and the passport is on the screen. Where this
+       browser already knows the President, the real record comes back; where
+       it does not, the passport is issued fresh under the same number and the
+       details can be corrected in the form. */
+    function becomePresident() {
+      save(STORE_KEY, true);
+
+      var known = loadPeople()[PRESIDENT_NO];
+      var held = load(STORE_P);
+
+      if (known) {
+        signInByNumber(PRESIDENT_NO);
+      } else if (!held || held.no !== PRESIDENT_NO) {
+        var at = new Date().toISOString();
+        var app = {
+          kind: "P",
+          name: value("p-name") || "President of Seaveland",
+          title: value("p-title") || "President of Seaveland",
+          known: value("p-known"),
+          mark: value("p-mark"),
+          first: value("p-first"),
+          photo: passportThumb,
+          at: at
+        };
+        save(STORE_PAPP, app);
+        issuePresidentialPassport();
+      }
+
+      refreshOfficeChrome();
+      renderPeople();
+      fillWhoSelect();
+
+      var p = load(STORE_P);
+      var note = known || (p && p.name !== "President of Seaveland")
+        ? "Welcome back. The Office is open and your passport is below."
+        : "The Office is open and your passport is issued. This browser did not know your details, " +
+          "so put them in the form and press Issue passport to correct them.";
+      $("p-signin-note").textContent = note;
+      $("o-key-note").textContent = "";
+      if (p) { $("p-doc").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
+      return note;
+    }
+
+    /* rebuild the documents from what the Office remembers about a number */
+    function signInByNumber(no) {
+      var person = loadPeople()[no];
+
+      if (!person) {
+        if (no === PRESIDENT_NO) {
+          becomePresident();
+          $("p-signin").open = false;
+          return null;
+        }
+        return "This browser has never heard of " + no + ". Sign in with a passport code from a device " +
+          "that holds it, or open a register link from the President.";
+      }
+
+      var issued = person.issued || new Date().toISOString();
+      var p = {
+        name: person.name,
+        title: person.title || "",
+        known: person.known || "",
+        mark: person.mark || "",
+        first: person.first || "",
+        photo: person.photo || null,
+        no: person.passport,
+        issued: issued,
+        expires: plusYears(issued, 5),
+        approvedBy: PRESIDENT_NO
+      };
+
+      var licence = null;
+      if (person.licence) {
+        licence = {
+          holder: person.name,
+          passportNo: person.passport,
+          klass: person.licence.klass,
+          waters: person.licence.waters,
+          quarry: person.licence.quarry || "",
+          valid: plusYears(person.licence.approvedAt, 1),
+          no: person.licence.no,
+          approvedBy: PRESIDENT_NO
+        };
+      }
+
+      signIn(p, licence);
+      return null;
+    }
+
+    $("p-signin-go").addEventListener("click", function () {
+      var raw = value("p-signin-code");
+      if (!raw) { $("p-signin-code").focus(); return; }
+
+      /* a short thing shaped like SVL-XXXXXX is a number, not a code */
+      var typed = normaliseNo(raw);
+      if (/^SVL-[A-Z0-9]{4,10}$/.test(typed)) {
+        var problem = signInByNumber(typed);
+        if (problem) { $("p-signin-note").textContent = problem; }
+        return;
+      }
+
+      var payload = unpack(raw);
+      if (!payload || payload.kind !== "T" || !payload.p || !payload.p.no) {
+        $("p-signin-note").textContent = /^SVL/i.test(typed)
+          ? "That does not read as a passport number. They look like SVL-YEXN2I."
+          : "That is neither a passport number nor a passport code.";
+        return;
+      }
+
+      signIn(payload.p, payload.f);
+    });
+
+    $("p-revoke").addEventListener("click", function () {
+      /* surrendering hands the document back, it does not burn the record:
+         the archive keeps it, and the number brings it out again */
+      var giving = load(STORE_P);
+      if (giving && giving.no) {
+        var all = loadArchive();
+        if (all[giving.no]) {
+          all[giving.no].surrendered = true;
+          save(STORE_ARCHIVE, all);
+        }
+      }
+
+      drop(STORE_P);
+      drop(STORE_PAPP);
+      drop(STORE_F);
+      drop(STORE_FAPP);
+      passportPhoto = null;
+      passportThumb = null;
+      $("p-photo").value = "";
+      $("p-photo-label").textContent = "Attach a photograph";
+      paintMug($("p-mug"), null);
+      $("p-form").reset();
+      $("p-note").textContent = "";
+      $("f-note").textContent = "";
+      renderPassportPending(null);
+      renderPassport(null);
+      renderLicencePending(null);
+      renderLicence(null);
+      syncLicenceGate(null);
+    });
+
+    /* ================= this device's licence ================= */
+
+    function syncLicenceGate(p) {
+      $("f-gate").hidden = !!p;
+      $("f-submit").disabled = !p;
+      $("f-holder").value = p ? p.name : "";
+    }
+
+    function licenceMrz(f) {
+      return "F<SVL" + mrzPad(f.holder + "<<" + f.klass, 34) + "<" + mrzPad(f.no, 10);
+    }
+
+    function renderLicence(f) {
+      $("f-doc").hidden = !f;
+      $("f-actions").hidden = !f;
+      $("f-empty").hidden = !!f || !!load(STORE_FAPP);
+      if (!f) { return; }
+
+      $("f-who").textContent = f.holder;
+      putNumber($("f-no"), f.no);
+      putNumber($("f-endorsed"), f.passportNo);
+      $("f-class-out").textContent = f.klass;
+      $("f-waters-out").textContent = f.waters;
+      $("f-target-out").textContent = f.quarry || "Undeclared";
+      $("f-valid").textContent = fmtDate(f.valid);
+      putNumber($("f-approved"), f.approvedBy || "The Office");
+      $("f-mrz").textContent = licenceMrz(f);
+    }
+
+    function renderLicencePending(app) {
+      $("f-pending").hidden = !app;
+      if (!app) { return; }
+      $("f-empty").hidden = true;
+      $("f-p-holder").textContent = app.holder;
+      $("f-p-passport").textContent = app.passportNo;
+      $("f-p-class").textContent = app.klass;
+      $("f-p-waters").textContent = app.waters;
+      $("f-pending-when").textContent = "Sent " + fmtDate(app.at);
+      $("f-code").value = pack(app);
+      $("f-selfapprove").hidden = !officeIsOpen();
+    }
+
+    $("f-form").addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var p = load(STORE_P);
+      if (!p) { syncLicenceGate(null); return; }
+
+      var app = {
+        kind: "F",
+        holder: p.name,
+        passportNo: p.no,
+        klass: $("f-class").value,
+        waters: $("f-waters").value,
+        quarry: value("f-target"),
+        at: new Date().toISOString()
+      };
+      save(STORE_FAPP, app);
+      drop(STORE_F);
+      renderLicence(null);
+      renderLicencePending(app);
+      $("f-redeem-note").textContent = "";
+
+      if (officeIsOpen()) {
+        issuePresidentialLicence();
+        return;
+      }
+      $("f-pending").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+    });
+
+    function issuePresidentialLicence() {
+      var app = load(STORE_FAPP);
+      if (!app || !officeIsOpen()) { return; }
+      var at = new Date().toISOString();
+      var answer = {
+        id: applicationId(app),
+        ok: true,
+        at: at,
+        no: docNumber("FSH", app.passportNo + "|" + at),
+        by: PRESIDENT_NO
+      };
+      rememberLicence(app, answer);
+      var problem = redeemLicence(pack(answer));
+      $("f-redeem-note").textContent = problem || "";
+      renderPeople();
+      fillWhoSelect();
+      if (!problem) { $("f-doc").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
+    }
+
+    $("f-copy").addEventListener("click", function () {
+      copyInto($("f-code"), $("f-redeem-note"), "Code copied. Send it to the President.");
+    });
+
+    $("f-withdraw").addEventListener("click", function () {
+      drop(STORE_FAPP);
+      renderLicencePending(null);
+      renderLicence(load(STORE_F));
+      $("f-redeem-note").textContent = "";
+    });
+
+    function redeemLicence(code) {
+      var app = load(STORE_FAPP);
+      if (!app) { return "There is no application waiting."; }
+
+      var answer = unpack(code);
+      if (!answer || !answer.id) { return "That is not an answer from the Office."; }
+      if (answer.id !== applicationId(app)) { return "That answer belongs to a different application."; }
+
+      if (!answer.ok) {
+        drop(STORE_FAPP);
+        renderLicencePending(null);
+        renderLicence(null);
+        return "Refused. The Office does not have to say why.";
+      }
+
+      var f = {
+        holder: app.holder,
+        passportNo: app.passportNo,
+        klass: app.klass,
+        waters: app.waters,
+        quarry: app.quarry,
+        valid: plusYears(answer.at, 1),
+        no: answer.no,
+        approvedBy: answer.by
+      };
+      keepLicence(f);
+      drop(STORE_FAPP);
+      renderLicencePending(null);
+      renderLicence(f);
+      return null;
+    }
+
+    $("f-redeem").addEventListener("click", function () {
+      var problem = redeemLicence($("f-approval").value);
+      $("f-redeem-note").textContent = problem || "";
+      if (!problem) { $("f-approval").value = ""; }
+    });
+
+    $("f-selfapprove").addEventListener("click", issuePresidentialLicence);
+
+    $("f-revoke").addEventListener("click", function () {
+      drop(STORE_F);
+      $("f-target").value = "";
+      $("f-note").textContent = "";
+      renderLicence(null);
+    });
+
+    /* ================= public register ================= */
+
+    function renderRecord(no) {
+      var people = loadPeople();
+      var key = personOf(people, no);
+      var person = key ? people[key] : null;
+      var violations = (person && person.violations ? person.violations : []).slice().sort(function (a, b) {
+        return new Date(b.at) - new Date(a.at);
+      });
+      var standing = standingOf(violations);
+
+      $("v-record").hidden = false;
+      putNumber($("v-no-out"),
+        person ? person.passport : no,
+        "",
+        person && person.licence ? "  \u00b7  " + person.licence.no : "");
+
+      var bits = [];
+      if (person && person.name) { bits.push(person.name); }
+      if (person && person.title) { bits.push(person.title); }
+      if (person && person.licence) { bits.push(person.licence.klass + ", " + person.licence.waters); }
+      $("v-holder-out").textContent = person
+        ? bits.join(" \u00b7 ")
+        : "No document of that number on file here.";
+      paintMug($("v-mug"), person && person.photo);
+
+      var pill = $("v-pill");
+      pill.textContent = person ? (standing.flagged ? standing.text : "Clear") : "Unknown";
+      pill.className = "pill " + (standing.flagged ? "flagged" : "clear");
+
+      var list = $("v-list");
+      list.textContent = "";
+
+      if (!violations.length) {
+        var empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = person
+          ? "Nothing recorded against this one. The Office is watching anyway."
+          : "This browser's copy of the register has nobody by that number. Ask the President for a register link.";
+        list.appendChild(empty);
+        return;
+      }
+
+      violations.forEach(function (e) {
+        var row = document.createElement("div");
+        row.className = "vitem";
+
+        var when = document.createElement("div");
+        when.className = "when";
+        when.textContent = fmtDate(e.at);
+
+        var mid = document.createElement("div");
+        var head = document.createElement("h4");
+        head.textContent = e.offence;
+        mid.appendChild(head);
+        if (e.note) {
+          var p = document.createElement("p");
+          p.textContent = e.note;
+          mid.appendChild(p);
+        }
+
+        var pen = document.createElement("div");
+        pen.className = "penalty";
+        pen.textContent = e.penalty;
+
+        row.appendChild(when);
+        row.appendChild(mid);
+        row.appendChild(pen);
+        list.appendChild(row);
+      });
+    }
+
+    $("v-form").addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var no = normaliseNo($("v-no").value);
+      if (!no) { $("v-no").focus(); return; }
+      renderRecord(no);
+    });
+
+    /* ================= the Office ================= */
+
+    function officeIsOpen() {
+      var flag = load(STORE_KEY);
+      if (flag === false) { return false; }   /* locked by hand, stays locked */
+      var held = load(STORE_P);
+      /* holding the President's passport on this device is admission enough */
+      return flag === true || (!!held && held.no === PRESIDENT_NO);
+    }
+
+    function refreshOfficeChrome() {
+      var open = officeIsOpen();
+      $("o-locked").hidden = open;
+      $("o-unlocked").hidden = !open;
+      if (open) { putNumber($("o-president"), PRESIDENT_NO, "President \u00b7 "); }
+      else { $("o-president").textContent = "Locked"; }
+      $("p-selfapprove").hidden = !open || !load(STORE_PAPP);
+      $("f-selfapprove").hidden = !open || !load(STORE_FAPP);
+
+      /* with the Office open there is nobody to send an application to */
+      $("p-submit").textContent = open ? "Issue passport" : "Send for approval";
+      $("f-submit").textContent = open ? "Issue licence" : "Send for approval";
+    }
+
+    $("o-unlock").addEventListener("click", function () {
+      var typed = normaliseNo($("o-key").value);
+      if (!typed) { $("o-key").focus(); return; }
+      if (typed !== PRESIDENT_NO) {
+        $("o-key-note").textContent = "That passport does not run Seaveland.";
+        return;
+      }
+      $("o-key").value = "";
+      becomePresident();
+    });
+
+    $("o-key").addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { ev.preventDefault(); $("o-unlock").click(); }
+    });
+
+    $("o-lock").addEventListener("click", function () {
+      save(STORE_KEY, false);
+      refreshOfficeChrome();
+      $("o-key-note").textContent = "Locked.";
+    });
+
+    /* --- tabs --- */
+    [["tab-apps", "pane-apps"], ["tab-people", "pane-people"], ["tab-viol", "pane-viol"]]
+      .forEach(function (pair, _i, all) {
+        $(pair[0]).addEventListener("click", function () {
+          all.forEach(function (other) {
+            var on = other[0] === pair[0];
+            $(other[0]).setAttribute("aria-selected", on ? "true" : "false");
+            $(other[1]).hidden = !on;
+          });
+          if (pair[0] === "tab-people") { renderPeople(); }
+          if (pair[0] === "tab-viol") { fillWhoSelect(); }
+        });
+      });
+
+    /* --- applications --- */
+
+    var reading = null;
+
+    $("o-read").addEventListener("click", function () {
+      var app = unpack($("o-app").value);
+      if (!app || (app.kind !== "P" && app.kind !== "F")) {
+        reading = null;
+        $("o-app-panel").hidden = true;
+        $("o-answer-wrap").hidden = true;
+        $("o-app-note").textContent = "That code does not read as an application.";
+        return;
+      }
+
+      reading = app;
+      var dl = $("o-app-facts");
+      dl.textContent = "";
+
+      if (app.kind === "P") {
+        fact(dl, "Applying for", "A passport");
+        fact(dl, "Name", app.name);
+        fact(dl, "Title claimed", app.title || "None");
+        fact(dl, "Known as", app.known || "\u2014");
+        fact(dl, "Distinguishing mark", app.mark || "None given");
+        fact(dl, "First visit", app.first || "\u2014");
+      } else {
+        var people = loadPeople();
+        var known = people[app.passportNo];
+        fact(dl, "Applying for", "A fishing licence");
+        fact(dl, "Applicant", app.holder);
+        fact(dl, "Passport", app.passportNo + (known ? "" : "  (not on file)"));
+        fact(dl, "Class", app.klass);
+        fact(dl, "Waters", app.waters);
+        fact(dl, "Declared quarry", app.quarry || "Undeclared");
+      }
+      fact(dl, "Applied", fmtDate(app.at));
+
+      paintMug($("o-app-mug"), app.kind === "P" ? app.photo : (loadPeople()[app.passportNo] || {}).photo);
+      $("o-app-panel").hidden = false;
+      $("o-answer-wrap").hidden = true;
+      $("o-app-note").textContent = "";
+    });
+
+    function answerApplication(ok) {
+      if (!reading) { return; }
+      var app = reading;
+      var at = new Date().toISOString();
+      var president = PRESIDENT_NO;
+      var answer = {
+        id: applicationId(app),
+        ok: ok,
+        at: at,
+        by: president,
+        no: null
+      };
+
+      if (ok) {
+        answer.no = app.kind === "P"
+          ? docNumber("SVL", app.name + "|" + at)
+          : docNumber("FSH", app.passportNo + "|" + at);
+        if (app.kind === "P") { rememberPassport(app, answer); } else { rememberLicence(app, answer); }
+      }
+
+      $("o-answer").value = pack(answer);
+      $("o-answer-wrap").hidden = false;
+      $("o-answer-note").textContent = ok
+        ? "Approved as " + maskInText(answer.no) + ". Send this back to them."
+        : "Refused. Send this back and their application clears.";
+      $("o-app-panel").hidden = true;
+      $("o-app").value = "";
+      reading = null;
+      renderPeople();
+      fillWhoSelect();
+    }
+
+    $("o-approve").addEventListener("click", function () { answerApplication(true); });
+    $("o-refuse").addEventListener("click", function () { answerApplication(false); });
+    $("o-copy-answer").addEventListener("click", function () {
+      copyInto($("o-answer"), $("o-answer-note"), "Copied.");
+    });
+
+    /* --- people --- */
+
+    function renderPeople() {
+      var people = loadPeople();
+      var keys = Object.keys(people).sort(function (a, b) {
+        return (people[a].name || "").localeCompare(people[b].name || "");
+      });
+      var host = $("o-people");
+      host.textContent = "";
+
+      if (!keys.length) {
+        $("o-people-note").textContent = "Nobody on file yet. Approve a passport and they appear here.";
+        return;
+      }
+      $("o-people-note").textContent = keys.length +
+        (keys.length === 1 ? " person on file, kept on this device." : " people on file, kept on this device.");
+
+      keys.forEach(function (no) {
+        var person = people[no];
+        var row = document.createElement("div");
+        row.className = "person";
+
+        var mug = document.createElement("div");
+        mug.className = "mug";
+        if (person.photo) {
+          paintMug(mug, person.photo);
+        } else {
+          /* no photograph on file, so the Office makes do with initials */
+          mug.className = "mug initials";
+          mug.textContent = (person.name || "?").split(/\s+/).slice(0, 2)
+            .map(function (part) { return part.charAt(0).toUpperCase(); }).join("");
+        }
+
+        var mid = document.createElement("div");
+        var name = document.createElement("div");
+        name.className = "name";
+        name.textContent = person.name + (no === PRESIDENT_NO ? " \u2014 President" : "");
+        var nums = document.createElement("div");
+        nums.className = "nums";
+        nums.appendChild(maskedNumber(person.passport));
+        if (person.licence) {
+          var tail = document.createElement("span");
+          tail.textContent = " \u00b7 " + person.licence.no;
+          nums.appendChild(tail);
+        }
+        mid.appendChild(name);
+        mid.appendChild(nums);
+
+        var standing = standingOf(person.violations);
+        var pill = document.createElement("span");
+        pill.className = "pill " + (standing.flagged ? "flagged" : "clear");
+        pill.textContent = standing.flagged ? standing.text : (person.licence ? "Licensed" : "No licence");
+
+        row.appendChild(mug);
+        row.appendChild(mid);
+        row.appendChild(pill);
+        host.appendChild(row);
+      });
+    }
+
+    $("o-build").addEventListener("click", function () {
+      var people = loadPeople();
+      if (!Object.keys(people).length) {
+        $("o-share-note").textContent = "Nothing in the register to send yet.";
+        return;
+      }
+      var link = location.origin + location.pathname + location.search +
+        "#register=" + pack({ people: people });
+      $("o-share").value = link;
+      var long = link.length > 8000
+        ? " It is a long one \u2014 photographs make it longer, and some apps cut long links in half."
+        : "";
+      copyInto($("o-share"), $("o-share-note"), "Link copied. Anyone who opens it gets the register." + long);
+    });
+
+    /* --- violations --- */
+
+    function fillWhoSelect() {
+      var people = loadPeople();
+      var keys = Object.keys(people).filter(function (no) { return !!people[no].licence; });
+      var select = $("o-who");
+      var was = select.value;
+      select.textContent = "";
+
+      if (!keys.length) {
+        var none = document.createElement("option");
+        none.value = "";
+        none.textContent = "Nobody holds a licence yet";
+        select.appendChild(none);
+        select.disabled = true;
+        $("o-record").disabled = true;
+        $("o-wipe").disabled = true;
+        $("o-who-hint").textContent = "Approve a fishing licence and the holder appears in this list.";
+        return;
+      }
+
+      select.disabled = false;
+      $("o-record").disabled = false;
+      $("o-wipe").disabled = false;
+      $("o-who-hint").textContent = "Anyone the Office has issued a licence to.";
+
+      keys.sort(function (a, b) {
+        return (people[a].name || "").localeCompare(people[b].name || "");
+      }).forEach(function (no) {
+        var person = people[no];
+        var opt = document.createElement("option");
+        opt.value = no;
+        opt.textContent = person.name + " \u2014 " + person.licence.no +
+          " (" + person.licence.klass.toLowerCase() + ")";
+        select.appendChild(opt);
+      });
+      if (was) { select.value = was; }
+    }
+
+    $("o-record").addEventListener("click", function () {
+      var no = $("o-who").value;
+      if (!no) { return; }
+
+      var offence = $("o-offence").value;
+      var note = value("o-particulars");
+      if (/^Other/.test(offence)) {
+        if (!note) {
+          $("o-particulars").focus();
+          $("o-viol-note").textContent = "State the offence in the particulars.";
+          return;
+        }
+        offence = note;
+        note = "";
+      }
+
+      var people = loadPeople();
+      var person = people[no];
+      if (!person) { return; }
+      person.violations = person.violations || [];
+      person.violations.push({
+        at: new Date().toISOString(),
+        offence: offence,
+        penalty: $("o-penalty").value,
+        note: note
+      });
+      save(STORE_PEOPLE, people);
+
+      $("o-particulars").value = "";
+      $("o-viol-note").textContent = "Recorded against " + person.name + ".";
+      $("v-no").value = person.licence ? person.licence.no : person.passport;
+      renderRecord(normaliseNo($("v-no").value));
+      renderPeople();
+    });
+
+    $("o-wipe").addEventListener("click", function () {
+      var no = $("o-who").value;
+      if (!no) { return; }
+      var people = loadPeople();
+      if (!people[no]) { return; }
+      people[no].violations = [];
+      save(STORE_PEOPLE, people);
+      $("o-viol-note").textContent = people[no].name + "'s record is clear. It never happened.";
+      renderRecord(normaliseNo(people[no].licence ? people[no].licence.no : no));
+      renderPeople();
+    });
+
+    /* --- a register arriving by link is merged in, never swapped over --- */
+
+    (function importFromHash() {
+      var match = /(?:^|[#&])register=([^&]+)/.exec(location.hash);
+      if (!match) { return; }
+      var payload = unpack(match[1]);
+      if (!payload || !payload.people) { return; }
+
+      var people = loadPeople();
+      var added = 0;
+
+      Object.keys(payload.people).forEach(function (no) {
+        var theirs = payload.people[no];
+        var mine = people[no];
+        if (!mine) {
+          people[no] = theirs;
+          added += (theirs.violations || []).length;
+          return;
+        }
+        ["name", "title", "photo", "licence", "issued"].forEach(function (k) {
+          if (!mine[k] && theirs[k]) { mine[k] = theirs[k]; }
+        });
+        mine.violations = mine.violations || [];
+        var seen = {};
+        mine.violations.forEach(function (v) { seen[v.at + "|" + v.offence] = true; });
+        (theirs.violations || []).forEach(function (v) {
+          if (!v || !v.at || !v.offence || seen[v.at + "|" + v.offence]) { return; }
+          mine.violations.push(v);
+          added += 1;
+        });
+      });
+
+      save(STORE_PEOPLE, people);
+      $("o-share-note").textContent = added
+        ? added + " entr" + (added === 1 ? "y" : "ies") + " received from the link."
+        : "That link held nothing this browser did not already have.";
+    })();
+
+    /* ================= save as image ================= */
+
+    var CARD_W = 1000, CARD_H = 620, SCALE = 2;
+
+    function labelText(c, text, x, y) {
+      c.save();
+      c.font = "600 15px ui-monospace, Menlo, Consolas, monospace";
+      c.letterSpacing = "2.4px";
+      c.fillStyle = "rgba(240,239,230,0.5)";
+      c.fillText(text.toUpperCase(), x, y);
+      c.restore();
+    }
+
+    function bodyText(c, text, x, y, max) {
+      c.save();
+      c.font = "25px ui-sans-serif, system-ui, Helvetica, Arial, sans-serif";
+      c.fillStyle = "#f0efe6";
+      var words = String(text).split(" ");
+      var line = "", ly = y;
+      for (var i = 0; i < words.length; i++) {
+        var test = line ? line + " " + words[i] : words[i];
+        if (c.measureText(test).width > max && line) {
+          c.fillText(line, x, ly);
+          line = words[i];
+          ly += 30;
+        } else {
+          line = test;
+        }
+      }
+      c.fillText(line, x, ly);
+      c.restore();
+    }
+
+    function drawCard(opts, done) {
+      var cv = document.createElement("canvas");
+      cv.width = CARD_W * SCALE;
+      cv.height = CARD_H * SCALE;
+      var c = cv.getContext("2d");
+      c.scale(SCALE, SCALE);
+
+      c.fillStyle = opts.ground;
+      c.fillRect(0, 0, CARD_W, CARD_H);
+
+      var glow = c.createRadialGradient(CARD_W * 0.88, 0, 10, CARD_W * 0.88, 0, CARD_W * 0.7);
+      glow.addColorStop(0, opts.glow);
+      glow.addColorStop(1, "rgba(0,0,0,0)");
+      c.fillStyle = glow;
+      c.fillRect(0, 0, CARD_W, CARD_H);
+
+      c.save();
+      c.globalAlpha = 0.05;
+      c.strokeStyle = "#ffffff";
+      c.lineWidth = 1;
+      for (var g = -CARD_H; g < CARD_W; g += 7) {
+        c.beginPath();
+        c.moveTo(g, CARD_H);
+        c.lineTo(g + CARD_H * 0.5, 0);
+        c.stroke();
+      }
+      c.restore();
+
+      c.strokeStyle = opts.accent;
+      c.lineWidth = 3;
+      c.strokeRect(18, 18, CARD_W - 36, CARD_H - 36);
+
+      c.save();
+      c.font = "600 17px ui-monospace, Menlo, Consolas, monospace";
+      c.letterSpacing = "5px";
+      c.fillStyle = opts.accent;
+      c.fillText(opts.kind.toUpperCase(), 56, 84);
+      c.restore();
+
+      c.font = '44px "Iowan Old Style", Palatino, Georgia, serif';
+      c.fillStyle = "#f0efe6";
+      c.fillText(opts.who, 56, 136);
+
+      c.strokeStyle = opts.line;
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(56, 164);
+      c.lineTo(CARD_W - 56, 164);
+      c.stroke();
+
+      var left = 56;
+      var colGap = opts.photo ? 220 : 0;
+      var x1 = left + colGap, x2 = x1 + 340;
+
+      opts.fields.forEach(function (f, i) {
+        var col = i % 2 === 0 ? x1 : x2;
+        var row = 202 + Math.floor(i / 2) * 76;
+        labelText(c, f[0], col, row);
+        bodyText(c, f[1] || "\u2014", col, row + 32, f[2] || 300);
+      });
+
+      c.fillStyle = "rgba(0,0,0,0.3)";
+      c.fillRect(20, CARD_H - 116, CARD_W - 40, 96);
+      c.save();
+      c.font = "20px ui-monospace, Menlo, Consolas, monospace";
+      c.letterSpacing = "1.5px";
+      c.fillStyle = "rgba(240,239,230,0.72)";
+      opts.mrz.forEach(function (lineText, i) {
+        c.fillText(lineText, 56, CARD_H - 82 + i * 30);
+      });
+      c.restore();
+
+      function finish() { cv.toBlob(function (blob) { done(blob); }, "image/png"); }
+
+      if (opts.photo) {
+        var img = new Image();
+        img.onload = function () {
+          var bx = left, by = 200, bw = 170, bh = 216;
+          c.save();
+          c.beginPath();
+          c.rect(bx, by, bw, bh);
+          c.clip();
+          var ratio = Math.max(bw / img.width, bh / img.height);
+          c.drawImage(img, bx + (bw - img.width * ratio) / 2, by + (bh - img.height * ratio) / 2,
+            img.width * ratio, img.height * ratio);
+          c.restore();
+          c.strokeStyle = opts.line;
+          c.lineWidth = 2;
+          c.strokeRect(bx, by, bw, bh);
+          finish();
+        };
+        img.onerror = finish;
+        img.src = opts.photo;
+      } else {
+        finish();
+      }
+    }
+
+    function offerSave(blob, filename, noteEl) {
+      if (!blob) { noteEl.textContent = "Could not render the image."; return; }
+      var api = window.claude && window.claude.downloads;
+      if (!api) {
+        noteEl.textContent = "Saving is unavailable here \u2014 take a screenshot instead.";
+        return;
+      }
+      noteEl.textContent = "Waiting for you to confirm the save\u2026";
+      api.save({ filename: filename, data: blob }).then(function () {
+        noteEl.textContent = "Saved.";
+      }).catch(function (err) {
+        var code = err && err.code;
+        noteEl.textContent =
+          code === "declined" ? "Save cancelled." :
+          code === "rate_limited" ? "One save at a time \u2014 try again in a moment." :
+          code === "too_large" ? "That image is too large to save." :
+          "Saving is unavailable here \u2014 take a screenshot instead.";
+      });
+    }
+
+    function slug(name) {
+      return (name || "seaveland").toLowerCase().replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "") || "seaveland";
+    }
+
+    $("p-save").addEventListener("click", function () {
+      var p = load(STORE_P);
+      if (!p) { return; }
+      $("p-note").textContent = "Rendering\u2026";
+      drawCard({
+        ground: "#10312b", line: "#2e5850", accent: "#c9a227",
+        glow: "rgba(201,162,39,0.20)",
+        kind: "Seaveland \u00b7 Passport",
+        who: p.name,
+        photo: p.photo,
+        mrz: passportMrz(p),
+        fields: [
+          ["Status", isPresident(p) ? "President" : "Visitor"],
+          ["Passport no.", p.no],
+          ["Known as", p.known],
+          ["First visit", p.first],
+          ["Title held", p.title || "None held", 660],
+          ["Distinguishing mark", p.mark || "None recorded", 300],
+          ["Issued", fmtDate(p.issued)],
+          ["Expires", fmtDate(p.expires)]
+        ]
+      }, function (blob) {
+        offerSave(blob, "seaveland-passport-" + slug(p.name) + ".png", $("p-note"));
+      });
+    });
+
+    $("f-save").addEventListener("click", function () {
+      var f = load(STORE_F);
+      if (!f) { return; }
+      $("f-note").textContent = "Rendering\u2026";
+      var people = loadPeople();
+      var person = people[f.passportNo];
+      var standing = standingOf(person && person.violations);
+      drawCard({
+        ground: "#2a1a0c", line: "#4a3018", accent: "#e6a94f",
+        glow: "rgba(230,169,79,0.22)",
+        kind: "Seaveland \u00b7 Fishing Licence",
+        who: f.holder,
+        photo: null,
+        mrz: [licenceMrz(f)],
+        fields: [
+          ["Licence no.", f.no],
+          ["Endorsed on", maskInText(f.passportNo)],
+          ["Class", f.klass],
+          ["Waters", f.waters],
+          ["Declared quarry", f.quarry || "Undeclared"],
+          ["Valid until", fmtDate(f.valid)],
+          ["Approved by", maskInText(f.approvedBy || "The Office"), 300],
+          ["Standing", standing.text, 300]
+        ]
+      }, function (blob) {
+        offerSave(blob, "seaveland-licence-" + slug(f.holder) + ".png", $("f-note"));
+      });
+    });
+
+    /* ================= restore ================= */
+
+    /* ---- nothing issued here is ever lost ----
+       An earlier build of this page kept its documents under different names,
+       and a browser that used it still has them. Anything found is adopted
+       and archived; failing that, the archive itself is fallen back on. */
+    (function recoverLostDocuments() {
+      if (load(STORE_P)) { return; }
+
+      var oldPassport = load("svl.passport.v1");
+      var oldLicence = load("svl.licence.v1");
+
+      if (oldPassport && oldPassport.no && oldPassport.name) {
+        oldPassport.approvedBy = oldPassport.approvedBy || oldPassport.no;
+        keepPassport(oldPassport);
+        if (oldLicence && oldLicence.passportNo === oldPassport.no) { keepLicence(oldLicence); }
+
+        /* put them back on the roster too, so the Office remembers them */
+        var people = loadPeople();
+        if (!people[oldPassport.no]) {
+          people[oldPassport.no] = {
+            passport: oldPassport.no,
+            name: oldPassport.name,
+            title: oldPassport.title || "",
+            known: oldPassport.known || "",
+            mark: oldPassport.mark || "",
+            first: oldPassport.first || "",
+            photo: null,
+            issued: oldPassport.issued,
+            licence: oldLicence && oldLicence.passportNo === oldPassport.no ? {
+              no: oldLicence.no,
+              klass: oldLicence.klass,
+              waters: oldLicence.waters,
+              quarry: oldLicence.quarry || "",
+              approvedAt: oldLicence.valid || oldPassport.issued
+            } : null,
+            violations: []
+          };
+          save(STORE_PEOPLE, people);
+        }
+        return;
+      }
+
+      var kept = newestKept();
+      if (kept && kept.p) {
+        save(STORE_P, kept.p);
+        if (kept.f && kept.f.passportNo === kept.p.no) { save(STORE_F, kept.f); }
+      }
+    })();
+
+    var heldPassport = load(STORE_P);
+    var heldLicence = heldPassport ? load(STORE_F) : null;
+    var passportApp = load(STORE_PAPP);
+    var licenceApp = heldPassport ? load(STORE_FAPP) : null;
+
+    if (!heldPassport) { drop(STORE_FAPP); drop(STORE_F); }
+
+    if (heldPassport) {
+      passportPhoto = heldPassport.photo || null;
+      if (passportPhoto) {
+        $("p-photo-label").textContent = "Photograph attached";
+        thumbnail(passportPhoto, function (small) { passportThumb = small; });
+        paintMug($("p-mug"), passportPhoto);
+      }
+      $("p-name").value = heldPassport.name || "";
+      $("p-title").value = heldPassport.title || "";
+      $("p-known").value = heldPassport.known || "";
+      $("p-mark").value = heldPassport.mark || "";
+      $("p-first").value = heldPassport.first || "";
+      $("v-no").value = heldPassport.no;
+    } else if (passportApp) {
+      passportThumb = passportApp.photo || null;
+      if (passportThumb) {
+        $("p-photo-label").textContent = "Photograph attached";
+        paintMug($("p-mug"), passportThumb);
+      }
+      $("p-name").value = passportApp.name || "";
+      $("p-title").value = passportApp.title || "";
+      $("p-known").value = passportApp.known || "";
+      $("p-mark").value = passportApp.mark || "";
+      $("p-first").value = passportApp.first || "";
+    }
+
+    renderPassportPending(passportApp);
+    renderPassport(heldPassport);
+    syncLicenceGate(heldPassport);
+    renderLicencePending(licenceApp);
+    renderLicence(heldLicence);
+    refreshOfficeChrome();
+    renderPeople();
+    fillWhoSelect();
+  })();
+</script>
+
+</body>
+</html>
