@@ -287,7 +287,8 @@
 
   input[type="text"], input[type="password"], select, textarea {
     font: inherit;
-    font-size: 0.95rem;
+    /* 16px is the floor that stops iOS zooming the page on focus */
+    font-size: 16px;
     color: var(--ink);
     background: var(--ground);
     border: 1px solid var(--rule);
@@ -367,6 +368,20 @@
     border-left: 2px solid var(--signal);
     padding-left: 0.7rem;
   }
+
+  .invited, .receipt {
+    display: grid;
+    gap: 0.4rem;
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.92rem;
+  }
+  .invited strong, .receipt strong { font-size: 1rem; }
+  .invited span, .receipt span { color: var(--ink-soft); }
+  .receipt { border-left-color: var(--signal); margin: 1rem 0 0; }
+  .receipt .actions { margin-top: 0.35rem; }
 
   details.signin {
     border: 1px solid var(--rule);
@@ -736,6 +751,63 @@
     color: var(--ink-soft);
   }
   footer p { margin: 0 0 0.4rem; max-width: 42rem; }
+
+  /* ---------- phones ---------- */
+
+  @media (max-width: 40rem) {
+    body { font-size: 16px; }
+
+    .wrap { padding: 0 1rem 3.5rem; }
+
+    section { padding-top: 2.5rem; }
+
+    .masthead { padding: 1.75rem 0 1.1rem; gap: 0.9rem; }
+    .seal { width: 54px; height: 54px; }
+
+    /* the jump links scroll sideways rather than stacking into a wall */
+    nav.jump {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 0 1.1rem;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    nav.jump::-webkit-scrollbar { display: none; }
+    nav.jump a { white-space: nowrap; }
+
+    .board { margin-top: 1.5rem; }
+    .readouts { grid-template-columns: 1fr 1fr; }
+    .readout { border-right: 0; border-bottom: 1px solid var(--rule); padding: 0.9rem 1rem 1rem; }
+    .readout:nth-child(odd) { border-right: 1px solid var(--rule); }
+    .readout:nth-last-child(-n+2) { border-bottom: 0; }
+    .readout dd { font-size: 1.5rem; }
+    canvas#water-line { height: 92px; }
+
+    .app { gap: 1.25rem; }
+    .form, .pending { padding: 1.1rem 1rem; }
+    .doc { padding: 1rem 1rem 0.9rem; }
+    .doc-fields { grid-template-columns: 1fr; gap: 0.7rem; }
+    .doc-body { grid-template-columns: 4.5rem 1fr; gap: 0.85rem; }
+    .photo { width: 4.5rem; height: 5.8rem; }
+    .mrz { font-size: 0.62rem; margin: 0 -1rem -0.9rem; padding: 0.5rem 1rem 0.6rem; }
+
+    /* comfortable thumbs: nothing under 44px tall, and full-width actions */
+    button.issue { width: 100%; padding: 0.9rem 1rem; }
+    button.minor { min-height: 44px; padding: 0.6rem 0.8rem; }
+    .actions { gap: 0.5rem; }
+    .actions button.issue { width: auto; flex: 1 1 100%; }
+    .lookup { grid-template-columns: 1fr; }
+
+    .tabs button { flex: 1 1 auto; padding: 0.8rem 0.6rem; min-height: 44px; }
+    .pane { padding: 1.1rem 1rem; }
+    .office-bar { padding: 0.8rem 1rem; }
+
+    .record-head, .vitem, .record .empty { padding-left: 1rem; padding-right: 1rem; }
+    .mug { width: 2.6rem; height: 3.3rem; }
+
+    .notice, .desk { gap: 0.35rem; }
+    footer { margin-top: 2.5rem; }
+  }
 </style>
 
 <div class="wrap">
@@ -809,6 +881,11 @@
     <h2>Apply for a Seaveland passport</h2>
     <p class="lede">Fill the form and send the application to the President. <strong>Nothing is issued until it comes back approved.</strong> Everything stays in your own browser &mdash; no server, no account, and the photograph never leaves your device except inside the code you choose to send.</p>
 
+    <div class="invited" id="p-invited" hidden>
+      <strong>You have been invited.</strong>
+      <span>Fill the form and press Issue passport &mdash; the President has approved you in advance, so there is nobody to wait for.</span>
+    </div>
+
     <details class="signin" id="p-signin">
       <summary>Already have a passport? Sign in on this device</summary>
       <div class="inner">
@@ -880,11 +957,12 @@
             <label for="p-code">Application code</label>
             <textarea id="p-code" class="code" readonly rows="3"></textarea>
             <div class="actions">
-              <button class="minor" type="button" id="p-copy">Copy code</button>
+              <button class="issue" type="button" id="p-copy-link">Copy application link</button>
+              <button class="minor" type="button" id="p-copy">Copy raw code</button>
               <button class="issue" type="button" id="p-selfapprove" hidden>Approve as President</button>
               <button class="minor warn" type="button" id="p-withdraw">Withdraw</button>
             </div>
-            <div class="hint">Send this to the President. It is long because the photograph is inside it.</div>
+            <div class="hint">Send the President the link &mdash; they open it and your application is already in front of them. The raw code is a fallback for apps that mangle long links.</div>
           </div>
           <div class="field">
             <label for="p-approval">The Office's answer</label>
@@ -924,6 +1002,16 @@
             </dl>
           </div>
           <div class="mrz" id="p-mrz">&mdash;</div>
+        </div>
+
+        <div class="receipt" id="p-receipt" hidden>
+          <strong>The Office does not know you yet.</strong>
+          <span>Your passport works, but the President's register has no copy of it, so violations and lookups will not find you. Send this receipt when you get a chance &mdash; it is the only thing that puts you on the list.</span>
+          <div class="actions">
+            <button class="issue" type="button" id="p-send-receipt">Send receipt to the Office</button>
+            <button class="minor" type="button" id="p-hide-receipt">Later</button>
+          </div>
+          <span class="note" id="p-receipt-note"></span>
         </div>
 
         <div class="doc-actions" id="p-actions" hidden>
@@ -1005,10 +1093,12 @@
             <label for="f-code">Application code</label>
             <textarea id="f-code" class="code" readonly rows="3"></textarea>
             <div class="actions">
-              <button class="minor" type="button" id="f-copy">Copy code</button>
+              <button class="issue" type="button" id="f-copy-link">Copy application link</button>
+              <button class="minor" type="button" id="f-copy">Copy raw code</button>
               <button class="issue" type="button" id="f-selfapprove" hidden>Approve as President</button>
               <button class="minor warn" type="button" id="f-withdraw">Withdraw</button>
             </div>
+            <div class="hint">The link is the easy way; the raw code is the fallback.</div>
           </div>
           <div class="field">
             <label for="f-approval">The Office's answer</label>
@@ -1135,15 +1225,25 @@
             <label for="o-answer">Send this back</label>
             <textarea id="o-answer" class="code" readonly rows="2"></textarea>
             <div class="actions">
-              <button class="minor" type="button" id="o-copy-answer">Copy answer</button>
-              <span class="note" id="o-answer-note"></span>
+              <button class="issue" type="button" id="o-copy-answer-link">Copy answer link</button>
+              <button class="minor" type="button" id="o-copy-answer">Copy raw answer</button>
             </div>
+            <div class="note" id="o-answer-note"></div>
           </div>
         </div>
 
         <div class="pane" id="pane-people" role="tabpanel" aria-labelledby="tab-people" hidden>
           <p class="note" id="o-people-note">Everyone the Office has issued to, kept on this device.</p>
           <div id="o-people"></div>
+          <div class="field subrule" style="padding-top: 1.05rem;">
+            <label for="o-invite">Invitation link</label>
+            <input type="text" id="o-invite" readonly placeholder="A link that issues passports without asking you">
+            <div class="actions">
+              <button class="minor" type="button" id="o-make-invite">Make an invitation link</button>
+            </div>
+            <div class="note" id="o-invite-note">Post this once and anyone who opens it can issue themselves a passport, approved in advance. They never have to know to contact you. You only learn who used it if they send back the receipt the page offers them.</div>
+          </div>
+
           <div class="field subrule" style="padding-top: 1.05rem;">
             <label for="o-share">Register link</label>
             <input type="text" id="o-share" readonly placeholder="Build a link to hand the register to someone">
@@ -1794,6 +1894,7 @@
       }
 
       $("p-mrz").textContent = passportMrz(p).join("\n");
+      refreshReceiptChrome();
     }
 
     function renderPassportPending(app) {
@@ -1835,7 +1936,7 @@
       $("p-redeem-note").textContent = "";
 
       /* the President is the approval, so there is nobody to wait for */
-      if (officeIsOpen()) {
+      if (issuingIsImmediate()) {
         issuePresidentialPassport();
         return;
       }
@@ -1844,16 +1945,57 @@
 
     function issuePresidentialPassport() {
       var app = load(STORE_PAPP);
-      if (!app || !officeIsOpen()) { return; }
+      if (!app || !issuingIsImmediate()) { return; }
       var at = new Date().toISOString();
-      var answer = { id: applicationId(app), ok: true, at: at, no: PRESIDENT_NO, by: PRESIDENT_NO };
-      rememberPassport(app, answer);
+      var mine = officeIsOpen();
+      var answer = {
+        id: applicationId(app),
+        kind: "P",
+        ok: true,
+        at: at,
+        no: mine ? PRESIDENT_NO : docNumber("SVL", app.name + "|" + at),
+        by: PRESIDENT_NO,
+        invite: !mine
+      };
+      if (mine) { rememberPassport(app, answer); }
       var problem = redeemPassport(pack(answer));
       $("p-redeem-note").textContent = problem || "";
       refreshOfficeChrome();
       renderPeople();
       fillWhoSelect();
       if (!problem) { $("p-doc").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
+    }
+
+    /* Everything that has to travel between two people travels as a link to
+       this same page. Opening it does the pasting for you. */
+    function siteLink(kind, payload) {
+      return location.origin + location.pathname + location.search + "#" + kind + "=" + pack(payload);
+    }
+
+    /* on a phone this opens the share sheet, which is one tap into whatever
+       messaging app they already use; elsewhere it falls back to the clipboard */
+    function sendLink(link, noteEl, title, done) {
+      if (navigator.share) {
+        navigator.share({ title: title, url: link }).then(function () {
+          noteEl.textContent = "Sent.";
+        }, function () {
+          copyLink(link, noteEl, done);
+        });
+        return;
+      }
+      copyLink(link, noteEl, done);
+    }
+
+    function copyLink(link, noteEl, done) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link).then(function () {
+          noteEl.textContent = done;
+        }, function () {
+          noteEl.textContent = "Could not reach the clipboard \u2014 copy the raw code instead.";
+        });
+      } else {
+        noteEl.textContent = "Could not reach the clipboard \u2014 copy the raw code instead.";
+      }
     }
 
     function applicationId(app) {
@@ -1876,6 +2018,13 @@
 
     $("p-copy").addEventListener("click", function () {
       copyInto($("p-code"), $("p-redeem-note"), "Code copied. Send it to the President.");
+    });
+
+    $("p-copy-link").addEventListener("click", function () {
+      var app = load(STORE_PAPP);
+      if (!app) { return; }
+      sendLink(siteLink("apply", app), $("p-redeem-note"), "Seaveland passport application",
+        "Link copied. Send it to the President \u2014 opening it puts your application in front of them.");
     });
 
     $("p-withdraw").addEventListener("click", function () {
@@ -1910,7 +2059,8 @@
         no: answer.no,
         issued: answer.at,
         expires: plusYears(answer.at, 5),
-        approvedBy: answer.by
+        approvedBy: answer.by,
+        byInvite: !!answer.invite
       };
       keepPassport(p);
       drop(STORE_PAPP);
@@ -2038,6 +2188,14 @@
       refreshOfficeChrome();
       renderPeople();
       fillWhoSelect();
+
+      if (pendingLinkApplication) {
+        $("o-app").value = pack(pendingLinkApplication);
+        pendingLinkApplication = null;
+        $("o-read").click();
+        $("tab-apps").click();
+        $("o-app-note").textContent = "This arrived by link while the Office was locked.";
+      }
 
       var p = load(STORE_P);
       var note = known || (p && p.name !== "President of Seaveland")
@@ -2212,7 +2370,7 @@
       renderLicencePending(app);
       $("f-redeem-note").textContent = "";
 
-      if (officeIsOpen()) {
+      if (issuingIsImmediate()) {
         issuePresidentialLicence();
         return;
       }
@@ -2221,16 +2379,18 @@
 
     function issuePresidentialLicence() {
       var app = load(STORE_FAPP);
-      if (!app || !officeIsOpen()) { return; }
+      if (!app || !issuingIsImmediate()) { return; }
       var at = new Date().toISOString();
       var answer = {
         id: applicationId(app),
+        kind: "F",
         ok: true,
         at: at,
         no: docNumber("FSH", app.passportNo + "|" + at),
-        by: PRESIDENT_NO
+        by: PRESIDENT_NO,
+        invite: !officeIsOpen()
       };
-      rememberLicence(app, answer);
+      if (officeIsOpen()) { rememberLicence(app, answer); }
       var problem = redeemLicence(pack(answer));
       $("f-redeem-note").textContent = problem || "";
       renderPeople();
@@ -2240,6 +2400,13 @@
 
     $("f-copy").addEventListener("click", function () {
       copyInto($("f-code"), $("f-redeem-note"), "Code copied. Send it to the President.");
+    });
+
+    $("f-copy-link").addEventListener("click", function () {
+      var app = load(STORE_FAPP);
+      if (!app) { return; }
+      sendLink(siteLink("apply", app), $("f-redeem-note"), "Seaveland licence application",
+        "Link copied. Send it to the President \u2014 opening it puts your application in front of them.");
     });
 
     $("f-withdraw").addEventListener("click", function () {
@@ -2298,10 +2465,37 @@
 
     /* ================= public register ================= */
 
+    /* the register a browser holds is only ever the Office's copy, so a
+       visitor looking themselves up would find nothing; their own documents
+       stand in for the record on their own device */
+    function selfAsPerson(no) {
+      var mine = load(STORE_P);
+      var licence = load(STORE_F);
+      if (!mine) { return null; }
+      var isMe = normaliseNo(mine.no) === no || (licence && normaliseNo(licence.no) === no);
+      if (!isMe) { return null; }
+      return {
+        own: true,
+        passport: mine.no,
+        name: mine.name,
+        title: mine.title || "",
+        photo: mine.photo || null,
+        licence: licence ? {
+          no: licence.no,
+          klass: licence.klass,
+          waters: licence.waters,
+          quarry: licence.quarry || "",
+          approvedAt: licence.valid
+        } : null,
+        violations: []
+      };
+    }
+
     function renderRecord(no) {
       var people = loadPeople();
       var key = personOf(people, no);
       var person = key ? people[key] : null;
+      if (!person) { person = selfAsPerson(no); }
       var violations = (person && person.violations ? person.violations : []).slice().sort(function (a, b) {
         return new Date(b.at) - new Date(a.at);
       });
@@ -2323,7 +2517,10 @@
       paintMug($("v-mug"), person && person.photo);
 
       var pill = $("v-pill");
-      pill.textContent = person ? (standing.flagged ? standing.text : "Clear") : "Unknown";
+      pill.textContent = !person ? "Unknown"
+        : standing.flagged ? standing.text
+        : person.own ? "Nothing on this device"
+        : "Clear";
       pill.className = "pill " + (standing.flagged ? "flagged" : "clear");
 
       var list = $("v-list");
@@ -2332,9 +2529,11 @@
       if (!violations.length) {
         var empty = document.createElement("div");
         empty.className = "empty";
-        empty.textContent = person
-          ? "Nothing recorded against this one. The Office is watching anyway."
-          : "This browser's copy of the register has nobody by that number. Ask the President for a register link.";
+        empty.textContent = !person
+          ? "This browser's copy of the register has nobody by that number. Ask the President for a register link."
+          : person.own
+            ? "These are your own documents. Violations are kept by the Office, not here \u2014 open a register link from the President to see whether anything is against you."
+            : "Nothing recorded against this one. The Office is watching anyway.";
         list.appendChild(empty);
         return;
       }
@@ -2393,10 +2592,16 @@
       else { $("o-president").textContent = "Locked"; }
       $("p-selfapprove").hidden = !open || !load(STORE_PAPP);
       $("f-selfapprove").hidden = !open || !load(STORE_FAPP);
+      refreshIssueChrome();
+    }
 
-      /* with the Office open there is nobody to send an application to */
-      $("p-submit").textContent = open ? "Issue passport" : "Send for approval";
-      $("f-submit").textContent = open ? "Issue licence" : "Send for approval";
+    /* with the Office open, or an invitation in hand, there is nobody to
+       send an application to */
+    function refreshIssueChrome() {
+      var straight = issuingIsImmediate();
+      $("p-submit").textContent = straight ? "Issue passport" : "Send for approval";
+      $("f-submit").textContent = straight ? "Issue licence" : "Send for approval";
+      $("p-invited").hidden = !isInvited() || officeIsOpen();
     }
 
     $("o-unlock").addEventListener("click", function () {
@@ -2437,6 +2642,7 @@
     /* --- applications --- */
 
     var reading = null;
+    var pendingLinkApplication = null;
 
     $("o-read").addEventListener("click", function () {
       var app = unpack($("o-app").value);
@@ -2477,6 +2683,8 @@
       $("o-app-note").textContent = "";
     });
 
+    var lastAnswer = null;
+
     function answerApplication(ok) {
       if (!reading) { return; }
       var app = reading;
@@ -2484,6 +2692,7 @@
       var president = PRESIDENT_NO;
       var answer = {
         id: applicationId(app),
+        kind: app.kind,
         ok: ok,
         at: at,
         by: president,
@@ -2497,11 +2706,12 @@
         if (app.kind === "P") { rememberPassport(app, answer); } else { rememberLicence(app, answer); }
       }
 
+      lastAnswer = answer;
       $("o-answer").value = pack(answer);
       $("o-answer-wrap").hidden = false;
       $("o-answer-note").textContent = ok
-        ? "Approved as " + maskInText(answer.no) + ". Send this back to them."
-        : "Refused. Send this back and their application clears.";
+        ? "Approved as " + maskInText(answer.no) + ". Send the link back and it lands on their device."
+        : "Refused. Send the link back and their application clears.";
       $("o-app-panel").hidden = true;
       $("o-app").value = "";
       reading = null;
@@ -2513,6 +2723,12 @@
     $("o-refuse").addEventListener("click", function () { answerApplication(false); });
     $("o-copy-answer").addEventListener("click", function () {
       copyInto($("o-answer"), $("o-answer-note"), "Copied.");
+    });
+
+    $("o-copy-answer-link").addEventListener("click", function () {
+      if (!lastAnswer) { return; }
+      sendLink(siteLink("answer", lastAnswer), $("o-answer-note"), "The Office of Seaveland has answered",
+        "Link copied. Send it back \u2014 opening it issues their document on their own device.");
     });
 
     /* --- people --- */
@@ -2675,6 +2891,161 @@
       renderRecord(normaliseNo(people[no].licence ? people[no].licence.no : no));
       renderPeople();
     });
+
+    /* ---- invitations ----
+       An application needs the applicant to know they must reach the
+       President. An invitation is the other way round: the President
+       approves in advance, once, and whoever opens the link issues their
+       own documents. The cost is that the Office only learns who they are
+       if they send the receipt back. */
+
+    var STORE_INVITE = "svl.invited.v2";
+
+    function isInvited() {
+      var invite = load(STORE_INVITE);
+      return !!(invite && invite.by === PRESIDENT_NO);
+    }
+
+    function issuingIsImmediate() {
+      return officeIsOpen() || isInvited();
+    }
+
+    $("o-make-invite").addEventListener("click", function () {
+      var link = siteLink("invite", { by: PRESIDENT_NO, at: new Date().toISOString() });
+      $("o-invite").value = link;
+      sendLink(link, $("o-invite-note"), "An invitation to Seaveland",
+        "Invitation copied. Anyone who opens it can issue themselves a passport.");
+    });
+
+    function takeInvitationFromLink() {
+      var invite = readHash("invite");
+      if (!invite || invite.by !== PRESIDENT_NO) { return; }
+      save(STORE_INVITE, invite);
+      refreshIssueChrome();
+    }
+
+    /* the receipt is how an invited visitor gets onto the register */
+    function receiptFor(p, licence) {
+      return {
+        passport: p.no,
+        name: p.name,
+        title: p.title || "",
+        known: p.known || "",
+        mark: p.mark || "",
+        first: p.first || "",
+        photo: null,
+        issued: p.issued,
+        licence: licence ? {
+          no: licence.no,
+          klass: licence.klass,
+          waters: licence.waters,
+          quarry: licence.quarry || "",
+          approvedAt: licence.valid
+        } : null
+      };
+    }
+
+    function refreshReceiptChrome() {
+      var p = load(STORE_P);
+      var owed = !!p && p.byInvite && !load("svl.receipt-sent.v2");
+      $("p-receipt").hidden = !owed;
+    }
+
+    $("p-send-receipt").addEventListener("click", function () {
+      var p = load(STORE_P);
+      if (!p) { return; }
+      var build = function (photo) {
+        var body = receiptFor(p, load(STORE_F));
+        body.photo = photo || null;
+        save("svl.receipt-sent.v2", true);
+        sendLink(siteLink("receipt", body), $("p-receipt-note"), "Seaveland: a new passport",
+          "Receipt copied. Send it to the President and you are on the register.");
+      };
+      if (p.photo) { thumbnail(p.photo, build); } else { build(null); }
+    });
+
+    $("p-hide-receipt").addEventListener("click", function () {
+      $("p-receipt").hidden = true;
+    });
+
+    function takeReceiptFromLink() {
+      var body = readHash("receipt");
+      if (!body || !body.passport || !body.name) { return; }
+      if (!officeIsOpen()) {
+        $("o-key-note").textContent =
+          "Someone has sent word that they hold a passport. Unlock the Office to file them.";
+        return;
+      }
+      var people = loadPeople();
+      var person = people[body.passport] || { violations: [] };
+      person.passport = body.passport;
+      person.name = body.name;
+      person.title = body.title || person.title || "";
+      person.known = body.known || person.known || "";
+      person.mark = body.mark || person.mark || "";
+      person.first = body.first || person.first || "";
+      person.photo = body.photo || person.photo || null;
+      person.issued = body.issued || person.issued;
+      person.violations = person.violations || [];
+      if (body.licence) { person.licence = body.licence; }
+      people[body.passport] = person;
+      save(STORE_PEOPLE, people);
+
+      renderPeople();
+      fillWhoSelect();
+      $("tab-people").click();
+      $("o-people-note").textContent = body.name + " filed from a receipt.";
+    }
+
+    /* --- links arriving from someone else --- */
+
+    function readHash(name) {
+      var match = new RegExp("(?:^|[#&])" + name + "=([^&]+)").exec(location.hash);
+      return match ? unpack(match[1]) : null;
+    }
+
+    /* an application link: put it straight in front of the President */
+    function takeApplicationFromLink() {
+      var app = readHash("apply");
+      if (!app || (app.kind !== "P" && app.kind !== "F")) { return; }
+
+      if (!officeIsOpen()) {
+        $("o-key-note").textContent =
+          "Someone has sent you an application. Unlock the Office with your number and it will be waiting.";
+        pendingLinkApplication = app;
+        $("o-locked").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+        return;
+      }
+
+      $("o-app").value = pack(app);
+      $("o-read").click();
+      $("tab-apps").click();
+      $("o-app-note").textContent = "Arrived by link. Read it and decide.";
+      $("o-app-panel").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+    }
+
+    /* an answer link: issue the document without the applicant lifting a finger */
+    function takeAnswerFromLink() {
+      var answer = readHash("answer");
+      if (!answer || !answer.id) { return; }
+
+      var packed = pack(answer);
+      var problem = answer.kind === "F" ? redeemLicence(packed) : redeemPassport(packed);
+
+      /* older answers did not say which document they were for */
+      if (problem === "There is no application waiting." || problem === "That answer belongs to a different application.") {
+        var other = answer.kind === "F" ? redeemPassport(packed) : redeemLicence(packed);
+        if (!other) { problem = null; }
+      }
+
+      var note = problem || "The Office has answered. Your document is below.";
+      $("p-redeem-note").textContent = answer.kind === "F" ? "" : note;
+      $("f-redeem-note").textContent = answer.kind === "F" ? note : "";
+      if (!problem) {
+        var target = answer.kind === "F" ? $("f-doc") : $("p-doc");
+        target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+      }
+    }
 
     /* --- a register arriving by link is merged in, never swapped over --- */
 
@@ -3016,6 +3387,13 @@
     refreshOfficeChrome();
     renderPeople();
     fillWhoSelect();
+
+    takeInvitationFromLink();
+    takeAnswerFromLink();
+    takeApplicationFromLink();
+    takeReceiptFromLink();
+    refreshIssueChrome();
+    refreshReceiptChrome();
   })();
 </script>
 
