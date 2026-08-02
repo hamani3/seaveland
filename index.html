@@ -820,6 +820,51 @@
   }
   footer p { margin: 0 0 0.4rem; max-width: 42rem; }
 
+  /* ---------- finish ---------- */
+
+  /* documents are the thing people screenshot, so they get the depth */
+  .doc {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.18), 0 12px 28px -12px rgba(0,0,0,0.35);
+  }
+
+  /* panels lift a touch off the page rather than sitting flat on it */
+  .form, .pending, .record, .office, .board, details.signin, .welcome {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+
+  .board-head strong, .office-bar .title { color: var(--accent); }
+
+  /* the primary action in any panel should be unmistakable */
+  button.issue {
+    box-shadow: 0 1px 0 rgba(0,0,0,0.12);
+    transition: filter 0.15s ease, transform 0.06s ease;
+  }
+  button.issue:active { transform: translateY(1px); }
+  button.minor { transition: color 0.12s ease, border-color 0.12s ease; }
+
+  /* fields should look like fields, and look alive when you are in one */
+  input[type="text"], input[type="password"], select, textarea {
+    transition: border-color 0.12s ease, background 0.12s ease;
+  }
+  input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+  input[readonly] { background: var(--sunk); }
+  input:disabled, select:disabled, textarea:disabled { opacity: 0.55; }
+
+  /* rows the eye can follow */
+  .person:hover, .vitem:hover, .approw:hover { background: var(--sunk); }
+  .person, .vitem, .approw { transition: background 0.12s ease; }
+  .person { padding-left: 0.5rem; padding-right: 0.5rem; margin: 0 -0.5rem; }
+
+  h2 + .lede { margin-top: -0.2rem; }
+
+  .pill { border-radius: 2px; }
+
+  /* a page this long deserves a little air at the end of each section */
+  section > .app, section > .desks, section > .record { margin-top: 0.25rem; }
+
   /* ---------- phones ---------- */
 
   @media (max-width: 40rem) {
@@ -964,7 +1009,7 @@
     </div>
 
     <details class="signin" id="p-signin">
-      <summary>Already have a passport? Sign in on this device</summary>
+      <summary id="p-signin-summary">Already have a passport? Sign in on this device</summary>
       <div class="inner">
         <div class="field">
           <label for="p-signin-code">Passport number, or a passport code</label>
@@ -1035,9 +1080,10 @@
             <div><dt>Title claimed</dt><dd id="p-p-title">&mdash;</dd></div>
             <div><dt>Known as</dt><dd id="p-p-known">&mdash;</dd></div>
           </dl>
-          <p class="note">It is in front of the President now. Nothing else is needed from you &mdash; this page checks on it by itself, and your passport appears here when it is granted.</p>
+          <p class="note" id="p-sent-state">&mdash;</p>
           <div class="actions">
             <button class="minor" type="button" id="p-check">Check now</button>
+            <button class="minor" type="button" id="p-resend" hidden>Send it again</button>
             <button class="issue" type="button" id="p-selfapprove" hidden>Approve as President</button>
             <button class="minor warn" type="button" id="p-withdraw">Withdraw</button>
             <span class="note" id="p-redeem-note"></span>
@@ -1164,9 +1210,10 @@
             <div><dt>Class</dt><dd id="f-p-class">&mdash;</dd></div>
             <div><dt>Waters</dt><dd id="f-p-waters">&mdash;</dd></div>
           </dl>
-          <p class="note">With the President. Your licence turns up here once it is granted.</p>
+          <p class="note" id="f-sent-state">&mdash;</p>
           <div class="actions">
             <button class="minor" type="button" id="f-check">Check now</button>
+            <button class="minor" type="button" id="f-resend" hidden>Send it again</button>
             <button class="issue" type="button" id="f-selfapprove" hidden>Approve as President</button>
             <button class="minor warn" type="button" id="f-withdraw">Withdraw</button>
             <span class="note" id="f-redeem-note"></span>
@@ -1468,6 +1515,7 @@
 
   <footer>
     <p><strong>Seaveland is not a country and this is not a government.</strong> The passports and licences here are novelty documents, generated in your browser, valid nowhere, and recognised by nobody except the people who already know what Seaveland is.</p>
+    <p class="stamp" id="build-stamp"></p>
     <p>Conditions are modelled from local climate records for the date and hour, not measured at the property. Documents and the register are held in this browser only &mdash; nothing is sent to a server, and a code or a link is the only way one device tells another anything.</p>
   </footer>
 
@@ -1775,6 +1823,23 @@
       if (after) { el.appendChild(document.createTextNode(after)); }
     }
 
+    /* Documents say who granted them, not a number. The number is the key to
+       the Office and has no business being printed on other people's papers. */
+    function presidentName() {
+      var people = loadPeople();
+      var p = people[PRESIDENT_NO];
+      if (p && p.name && p.name !== "President of Seaveland") { return p.name; }
+      var mine = load(STORE_P);
+      if (mine && mine.no === PRESIDENT_NO && mine.name) { return mine.name; }
+      return "The President";
+    }
+
+    /* an approver is shown by name; anyone else's number is shown plainly */
+    function approverText(by) {
+      if (!by || by === PRESIDENT_NO || by === "The Office") { return presidentName(); }
+      return by;
+    }
+
     function maskInText(no) {
       return no === PRESIDENT_NO ? PRESIDENT_MASK : no;
     }
@@ -1997,11 +2062,9 @@
       $("p-mark-out").textContent = p.mark || "None recorded";
       $("p-issued").textContent = fmtDate(p.issued);
       $("p-expires").textContent = fmtDate(p.expires);
-      if (p.approvedBy === p.no) {
-        $("p-approved").textContent = "Their own hand, being the President";
-      } else {
-        putNumber($("p-approved"), p.approvedBy || "The Office");
-      }
+      $("p-approved").textContent = p.approvedBy === p.no
+        ? "Their own hand, being the President"
+        : approverText(p.approvedBy);
 
       var box = $("p-photo-box");
       box.textContent = "";
@@ -2029,6 +2092,7 @@
       $("p-p-known").textContent = app.known || "\u2014";
       $("p-pending-when").textContent = "Sent " + fmtDate(app.at);
       $("p-selfapprove").hidden = !officeIsOpen();
+      paintSentState();
     }
 
     $("p-form").addEventListener("submit", function (ev) {
@@ -2052,6 +2116,11 @@
         photo: passportThumb,
         at: new Date().toISOString()
       };
+      /* Whether this is issued on the spot must be decided while the old
+         passport is still in hand: dropping it first would close the Office
+         underneath us and turn an amendment into an application. */
+      var immediate = issuingIsImmediate();
+
       save(STORE_PAPP, app);
       drop(STORE_P);
       drop(STORE_F);
@@ -2066,18 +2135,19 @@
       $("p-redeem-note").textContent = "";
 
       /* the President is the approval, so there is nobody to wait for */
-      if (issuingIsImmediate()) {
-        issuePresidentialPassport();
+      if (immediate) {
+        issuePresidentialPassport(true);
         return;
       }
+      if (typeof scheduleNextCheck === "function") { scheduleNextCheck(); }
       $("p-pending").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
     });
 
-    function issuePresidentialPassport() {
+    function issuePresidentialPassport(alreadyDecided) {
       var app = load(STORE_PAPP);
-      if (!app || !issuingIsImmediate()) { return; }
+      if (!app || !(alreadyDecided || issuingIsImmediate())) { return; }
       var at = new Date().toISOString();
-      var mine = officeIsOpen();
+      var mine = alreadyDecided ? load(STORE_KEY) !== false : officeIsOpen();
       var answer = {
         id: applicationId(app),
         kind: "P",
@@ -2275,6 +2345,10 @@
       $("p-signin-code").value = "";
       $("v-no").value = p.no;
 
+      /* holding this passport is what makes someone the President, so the
+         Office is opened deliberately rather than left to be inferred */
+      if (p.no === PRESIDENT_NO) { save(STORE_KEY, true); }
+
       renderPassportPending(null);
       renderPassport(p);
       syncLicenceGate(p);
@@ -2305,15 +2379,28 @@
       if (known) {
         signInByNumber(PRESIDENT_NO);
       } else if (!held || held.no !== PRESIDENT_NO) {
+        /* If this device is holding somebody else's passport, the form is
+           full of THEIR details. Borrowing them would issue the President a
+           passport in another person's name, so they are ignored and the
+           form is cleared for the real ones. */
+        var wearingSomeoneElse = !!held && held.no !== PRESIDENT_NO;
+        if (wearingSomeoneElse) {
+          ["p-name", "p-title", "p-known", "p-mark", "p-first"].forEach(function (id) { $(id).value = ""; });
+          passportPhoto = null;
+          passportThumb = null;
+          paintMug($("p-mug"), null);
+          $("p-photo-label").textContent = "Attach a photograph";
+        }
+
         var at = new Date().toISOString();
         var app = {
           kind: "P",
-          name: value("p-name") || "President of Seaveland",
-          title: value("p-title") || "President of Seaveland",
-          known: value("p-known"),
-          mark: value("p-mark"),
-          first: value("p-first"),
-          photo: passportThumb,
+          name: (wearingSomeoneElse ? "" : value("p-name")) || "President of Seaveland",
+          title: (wearingSomeoneElse ? "" : value("p-title")) || "President of Seaveland",
+          known: wearingSomeoneElse ? "" : value("p-known"),
+          mark: wearingSomeoneElse ? "" : value("p-mark"),
+          first: wearingSomeoneElse ? "" : value("p-first"),
+          photo: wearingSomeoneElse ? null : passportThumb,
           at: at
         };
         save(STORE_PAPP, app);
@@ -2479,7 +2566,9 @@
       $("f-waters-out").textContent = f.waters;
       $("f-target-out").textContent = f.quarry || "Undeclared";
       $("f-valid").textContent = fmtDate(f.valid);
-      putNumber($("f-approved"), f.approvedBy || "The Office");
+      $("f-approved").textContent = f.approvedBy === f.passportNo
+        ? "Their own hand, being the President"
+        : approverText(f.approvedBy);
       $("f-mrz").textContent = licenceMrz(f);
     }
 
@@ -2493,6 +2582,7 @@
       $("f-p-waters").textContent = app.waters;
       $("f-pending-when").textContent = "Sent " + fmtDate(app.at);
       $("f-selfapprove").hidden = !officeIsOpen();
+      paintSentState();
     }
 
     $("f-form").addEventListener("submit", function (ev) {
@@ -2512,6 +2602,8 @@
         quarry: value("f-target"),
         at: new Date().toISOString()
       };
+      var immediateF = issuingIsImmediate();
+
       save(STORE_FAPP, app);
       drop(STORE_F);
       putApp(app);
@@ -2520,7 +2612,7 @@
       refreshIssueChrome();
       $("f-redeem-note").textContent = "";
 
-      if (issuingIsImmediate()) {
+      if (immediateF) {
         issuePresidentialLicence();
         return;
       }
@@ -2806,8 +2898,13 @@
       var open = officeIsOpen();
       $("o-locked").hidden = open;
       $("o-unlocked").hidden = !open;
-      if (open) { putNumber($("o-president"), PRESIDENT_NO, "President \u00b7 "); }
-      else { $("o-president").textContent = "Locked"; }
+      if (open) {
+        $("o-president").textContent = "";
+        $("o-president").appendChild(document.createTextNode("President \u00b7 " + presidentName() + " \u00b7 "));
+        $("o-president").appendChild(maskedNumber(PRESIDENT_NO));
+      } else {
+        $("o-president").textContent = "Locked";
+      }
       $("p-selfapprove").hidden = !open || !load(STORE_PAPP);
       $("f-selfapprove").hidden = !open || !load(STORE_FAPP);
       refreshIssueChrome();
@@ -2822,6 +2919,9 @@
          it would only be in the road */
       var brandNew = !load(STORE_P) && !load(STORE_PAPP);
       $("welcome").hidden = !brandNew;
+      $("p-signin-summary").textContent = load(STORE_P)
+        ? "Sign in as someone else, or as the President"
+        : "Already have a passport? Sign in on this device";
       $("p-submit").textContent = straight ? "Issue passport" : "Send for approval";
       $("f-submit").textContent = straight ? "Issue licence" : "Send for approval";
       $("p-invited").hidden = !isInvited() || officeIsOpen();
@@ -3057,6 +3157,22 @@
     $("welcome-go").addEventListener("click", function () {
       $("p-name").focus();
       $("p-form").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+    });
+
+    $("p-resend").addEventListener("click", function () {
+      $("p-redeem-note").textContent = "Sending\u2026";
+      cloudPush(function (err) {
+        $("p-redeem-note").textContent = err ? "Still cannot reach the Office. It will keep trying." : "Sent.";
+        paintSentState();
+      });
+    });
+
+    $("f-resend").addEventListener("click", function () {
+      $("f-redeem-note").textContent = "Sending\u2026";
+      cloudPush(function (err) {
+        $("f-redeem-note").textContent = err ? "Still cannot reach the Office. It will keep trying." : "Sent.";
+        paintSentState();
+      });
     });
 
     $("p-check").addEventListener("click", function () {
@@ -3542,6 +3658,33 @@
 
     /* ---- talking to the shared register ---- */
 
+    var BUILD = "2026-08-02f";
+
+    /* An applicant must never be told their application is with the President
+       when it is in fact stuck on their phone. */
+    function paintSentState() {
+      var owed = hasUnsent();
+      [["p", STORE_PAPP], ["f", STORE_FAPP]].forEach(function (pair) {
+        var note = $(pair[0] + "-sent-state");
+        var again = $(pair[0] + "-resend");
+        if (!note) { return; }
+        var waiting = load(pair[1]);
+        if (!waiting) { return; }
+
+        if (owed) {
+          note.textContent = "Not sent yet \u2014 this device cannot reach the Office. It keeps trying, " +
+            "and you can press Send it again. Nothing is lost.";
+          note.className = "note warn";
+          if (again) { again.hidden = false; }
+        } else {
+          note.textContent = "Sent. It is in front of the President now \u2014 nothing else is needed from you. " +
+            "Your document appears here when it is granted.";
+          note.className = "note";
+          if (again) { again.hidden = true; }
+        }
+      });
+    }
+
     function paintCloud() {
       var el = $("o-cloud");
       if (!el) { return; }
@@ -3549,6 +3692,7 @@
         cloudState === "syncing" ? "Syncing\u2026" :
         cloudState === "synced" ? "In step with the shared register" +
           (cloudSince ? " \u2014 " + cloudSince.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "") :
+        cloudState === "guarded" ? "Waiting to read the register before writing, so nothing of anyone else's is lost." :
         cloudState === "busy" ? "The shared register is asking for a moment \u2014 what you did is saved here and will go through shortly." :
         cloudState === "offline" ? "Cannot reach the shared register. This device is working from its own copy and will catch up when it can." :
         "Not checked yet.";
@@ -3558,37 +3702,8 @@
     function cloudMark(state) {
       cloudState = state;
       if (state === "synced") { cloudSince = new Date(); }
-      /* the tab you are looking at lights up, so the bar reads as tabs rather
-       than as a row of links */
-    (function markCurrentSection() {
-      var links = Array.prototype.slice.call(document.querySelectorAll("nav.jump a"));
-      var sections = links.map(function (a) { return document.querySelector(a.getAttribute("href")); });
-
-      function mark(el) {
-        links.forEach(function (a, i) {
-          a.setAttribute("aria-current", sections[i] === el ? "true" : "false");
-        });
-      }
-
-      if (!("IntersectionObserver" in window)) { mark(sections[0]); return; }
-
-      var seen = {};
-      var watcher = new IntersectionObserver(function (entries) {
-        entries.forEach(function (entry) { seen[entry.target.id] = entry.intersectionRatio; });
-        var best = null, bestRatio = 0;
-        sections.forEach(function (el) {
-          if (!el) { return; }
-          var ratio = seen[el.id] || 0;
-          if (ratio > bestRatio) { bestRatio = ratio; best = el; }
-        });
-        mark(best || sections[0]);
-      }, { rootMargin: "-70px 0px -55% 0px", threshold: [0, 0.15, 0.4, 0.75, 1] });
-
-      sections.forEach(function (el) { if (el) { watcher.observe(el); } });
-      mark(sections[0]);
-    })();
-
-    paintCloud();
+      paintCloud();
+      paintSentState();
     }
 
     /* The register is a free, shared service with a request limit, so the
@@ -3601,6 +3716,7 @@
     var CLOUD_GAP = 4000;
     var cloudRetries = 0;
     var cloudSynced = false;
+    var lastSeenSize = 0;
     var STORE_DIRTY = "svl.unsent.v2";
 
     /* A change made here is written down as unsent until the register has
@@ -3642,7 +3758,8 @@
     function cloudFinish(err, done) {
       cloudBusy = false;
       cloudLast = Date.now();
-      cloudMark(err ? (String(err.message) === "busy" ? "busy" : "offline") : "synced");
+      var kind = String(err && err.message);
+      cloudMark(!err ? "synced" : kind === "busy" ? "busy" : kind === "would-shrink" ? "guarded" : "offline");
       if (done) { done(err || null); }
     }
 
@@ -3657,6 +3774,8 @@
       cloudHold();
       cloudMark("syncing");
       fetchRegister().then(function (body) {
+        lastSeenSize = Object.keys((body && body.people) || {}).length +
+                       Object.keys((body && body.applications) || {}).length;
         var report = mergePeople((body && body.people) || {});
         mergeApps((body && body.applications) || {});
         renderApplications();
@@ -3702,9 +3821,20 @@
 
       prepare.then(function (body) {
         if (body) {
+          lastSeenSize = Object.keys(body.people || {}).length +
+                         Object.keys(body.applications || {}).length;
           mergePeople(body.people || {});
           mergeApps(body.applications || {});
         }
+
+        /* A device that could not read first must never write less than the
+           register is known to hold: an empty phone would otherwise erase
+           everyone. Better to wait and try again with a proper read. */
+        var about = Object.keys(loadPeople()).length + Object.keys(loadApps()).length;
+        if (!body && about < lastSeenSize) {
+          throw new Error("would-shrink");
+        }
+
         return fetch(CLOUD, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -3992,7 +4122,7 @@
           ["Waters", f.waters],
           ["Declared quarry", f.quarry || "Undeclared"],
           ["Valid until", fmtDate(f.valid)],
-          ["Approved by", maskInText(f.approvedBy || "The Office"), 300],
+          ["Approved by", approverText(f.approvedBy), 300],
           ["Standing", standing.text, 300]
         ]
       }, function (blob) {
@@ -4184,6 +4314,38 @@
       });
     }
 
+    /* the tab you are looking at lights up, so the bar reads as tabs rather
+       than as a row of links */
+    (function markCurrentSection() {
+      var links = Array.prototype.slice.call(document.querySelectorAll("nav.jump a"));
+      var sections = links.map(function (a) { return document.querySelector(a.getAttribute("href")); });
+
+      function mark(el) {
+        links.forEach(function (a, i) {
+          a.setAttribute("aria-current", sections[i] === el ? "true" : "false");
+        });
+      }
+
+      if (!("IntersectionObserver" in window)) { mark(sections[0]); return; }
+
+      var seen = {};
+      var watcher = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) { seen[entry.target.id] = entry.intersectionRatio; });
+        var best = null, bestRatio = 0;
+        sections.forEach(function (el) {
+          if (!el) { return; }
+          var ratio = seen[el.id] || 0;
+          if (ratio > bestRatio) { bestRatio = ratio; best = el; }
+        });
+        mark(best || sections[0]);
+      }, { rootMargin: "-70px 0px -55% 0px", threshold: [0, 0.15, 0.4, 0.75, 1] });
+
+      sections.forEach(function (el) { if (el) { watcher.observe(el); } });
+      mark(sections[0]);
+    })();
+
+    $("build-stamp").textContent = "Build " + BUILD + " \u00b7 register " + REGISTER_ID.slice(0, 8);
+
     paintCloud();
     cloudPull(function () { refreshStanding(); });
 
@@ -4191,12 +4353,37 @@
        got through \u2014 cloudPush reads again before it writes */
     setTimeout(publishWhatThisDeviceHolds, 5000);
 
-    /* a quiet poll so a violation recorded elsewhere turns up on its own,
-       and an immediate check whenever the page is looked at again */
-    setInterval(refreshFromRegister, 60000 + Math.floor(Math.random() * 30000));
+    /* Someone waiting on a decision should not sit staring at a page for a
+       minute, so the check is brisk while anything is outstanding and quiet
+       once there is nothing to wait for. */
+    var quietPoll = 60000 + Math.floor(Math.random() * 30000);
+    var eagerPoll = 12000 + Math.floor(Math.random() * 5000);
+    var pollTimer = null;
+
+    function waitingOnTheOffice() {
+      return !!(load(STORE_PAPP) || load(STORE_FAPP) || hasUnsent());
+    }
+
+    function scheduleNextCheck() {
+      if (pollTimer) { clearTimeout(pollTimer); }
+      pollTimer = setTimeout(function () {
+        refreshFromRegister();
+        scheduleNextCheck();
+      }, waitingOnTheOffice() ? eagerPoll : quietPoll);
+    }
+
+    scheduleNextCheck();
+
     document.addEventListener("visibilitychange", function () {
-      if (!document.hidden) { refreshFromRegister(); }
+      if (!document.hidden) {
+        refreshFromRegister();
+        scheduleNextCheck();
+      }
     });
+
+    /* coming back to the tab, or the phone waking, is also a good moment */
+    window.addEventListener("focus", function () { refreshFromRegister(); });
+    window.addEventListener("pageshow", function () { refreshFromRegister(); });
   })();
 </script>
 
