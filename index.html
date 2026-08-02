@@ -689,6 +689,16 @@
     .vitem .penalty { white-space: normal; }
   }
 
+  .record-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.9rem 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+  .record-actions .flabel { margin-right: 0.2rem; }
+
   .record .empty { padding: 1.6rem 1.25rem; font-size: 0.92rem; color: var(--ink-soft); }
 
   /* ---------- the Office ---------- */
@@ -1227,6 +1237,12 @@
         <span class="pill clear" id="v-pill">Clear</span>
       </div>
       <div id="v-list"></div>
+      <div class="record-actions" id="v-actions" hidden>
+        <span class="flabel">President</span>
+        <button class="minor warn" type="button" id="v-take-licence">Take licence</button>
+        <button class="minor warn" type="button" id="v-take-passport">Take passport</button>
+        <span class="note" id="v-action-note"></span>
+      </div>
     </div>
 
     <!-- the Office -->
@@ -1701,6 +1717,18 @@
       return new Date(iso).toLocaleDateString(undefined, {
         day: "2-digit", month: "short", year: "numeric"
       }).toUpperCase();
+    }
+
+    /* A licence records when it expires. When it was granted has to be the
+       same fact everywhere, or the checks that compare the two disagree with
+       each other and a licence flickers in and out of existence. */
+    function grantedAt(licence) {
+      if (!licence) { return null; }
+      if (licence.approvedAt) { return licence.approvedAt; }
+      if (!licence.valid) { return null; }
+      var d = new Date(licence.valid);
+      d.setFullYear(d.getFullYear() - 1);
+      return d.toISOString();
     }
 
     function plusYears(iso, years) {
@@ -2336,9 +2364,10 @@
           klass: person.licence.klass,
           waters: person.licence.waters,
           quarry: person.licence.quarry || "",
-          valid: plusYears(person.licence.approvedAt, 1),
+          valid: plusYears(person.licence.approvedAt || new Date().toISOString(), 1),
           no: person.licence.no,
-          approvedBy: PRESIDENT_NO
+          approvedBy: PRESIDENT_NO,
+          approvedAt: person.licence.approvedAt
         };
       }
 
@@ -2370,9 +2399,16 @@
     });
 
     $("p-revoke").addEventListener("click", function () {
+      var giving = load(STORE_P);
+      if (!giving) { return; }
+      if (!window.confirm(
+        "Surrender passport " + giving.no + "?\n\n" +
+        "Your fishing licence goes with it. The Office keeps the record, so it can be brought back with your number, " +
+        "but this device will be empty until then."
+      )) { return; }
+
       /* surrendering hands the document back, it does not burn the record:
          the archive keeps it, and the number brings it out again */
-      var giving = load(STORE_P);
       /* the President handing in their own passport keeps the Office open,
          or they could not issue themselves a replacement */
       if (giving && giving.no === PRESIDENT_NO && officeIsOpen()) { save(STORE_KEY, true); }
@@ -2536,7 +2572,8 @@
         quarry: app.quarry,
         valid: plusYears(answer.at, 1),
         no: answer.no,
-        approvedBy: answer.by
+        approvedBy: answer.by,
+        approvedAt: answer.at
       };
       keepLicence(f);
       drop(STORE_FAPP);
@@ -2549,6 +2586,12 @@
     $("f-selfapprove").addEventListener("click", issuePresidentialLicence);
 
     $("f-revoke").addEventListener("click", function () {
+      var held = load(STORE_F);
+      if (!held) { return; }
+      if (!window.confirm(
+        "Surrender fishing licence " + held.no + "?\n\n" +
+        "Your passport is unaffected. You can apply for another licence afterwards."
+      )) { return; }
       drop(STORE_F);
       $("f-target").value = "";
       $("f-note").textContent = "";
@@ -2578,7 +2621,7 @@
           klass: licence.klass,
           waters: licence.waters,
           quarry: licence.quarry || "",
-          approvedAt: licence.valid
+          approvedAt: grantedAt(licence)
         } : null,
         violations: []
       };
@@ -2618,6 +2661,8 @@
         : person.own ? "Nothing on this device"
         : "Clear";
       pill.className = "pill " + (standing.flagged ? "flagged" : "clear");
+
+      refreshRecordActions(person);
 
       var list = $("v-list");
       list.textContent = "";
@@ -2662,6 +2707,29 @@
         list.appendChild(row);
       });
     }
+
+    var showingPerson = null;
+
+    function refreshRecordActions(person) {
+      showingPerson = person && !person.own ? person : null;
+      var can = !!showingPerson && officeIsOpen() && showingPerson.passport !== PRESIDENT_NO && !showingPerson.revoked;
+      $("v-actions").hidden = !can;
+      if (!can) { return; }
+      $("v-take-licence").hidden = !showingPerson.licence;
+      $("v-action-note").textContent = "";
+    }
+
+    $("v-take-licence").addEventListener("click", function () {
+      if (!showingPerson) { return; }
+      revoke(showingPerson.passport, "licence");
+      renderRecord(normaliseNo($("v-no").value));
+    });
+
+    $("v-take-passport").addEventListener("click", function () {
+      if (!showingPerson) { return; }
+      revoke(showingPerson.passport, "passport");
+      renderRecord(normaliseNo($("v-no").value));
+    });
 
     $("v-form").addEventListener("submit", function (ev) {
       ev.preventDefault();
@@ -2922,7 +2990,8 @@
           var f = {
             holder: mineF.holder, passportNo: mineF.passportNo, klass: mineF.klass,
             waters: mineF.waters, quarry: mineF.quarry,
-            valid: plusYears(liveF.decidedAt, 1), no: liveF.no, approvedBy: liveF.by
+            valid: plusYears(liveF.decidedAt, 1), no: liveF.no,
+            approvedBy: liveF.by, approvedAt: liveF.decidedAt
           };
           keepLicence(f);
           drop(STORE_FAPP);
@@ -3044,6 +3113,16 @@
       var people = loadPeople();
       var person = people[no];
       if (!person) { return; }
+
+      var who = person.name || no;
+      var question = what === "licence"
+        ? "Take " + who + "'s fishing licence (" + (person.licence ? person.licence.no : "") + ")?\n\n" +
+          "They keep their passport, and their record of violations stays."
+        : "Take " + who + "'s passport (" + no + ")?\n\n" +
+          "They come off the register everywhere, on every device, along with their licence. " +
+          "This is not easily undone.";
+      if (!window.confirm(question)) { return; }
+
       var at = new Date().toISOString();
 
       if (what === "licence") {
@@ -3162,6 +3241,12 @@
       if (!no) { return; }
       var people = loadPeople();
       if (!people[no]) { return; }
+      var count = (people[no].violations || []).length;
+      if (!count) { $("o-viol-note").textContent = "Nothing on their record to wipe."; return; }
+      if (!window.confirm(
+        "Wipe " + people[no].name + "'s record?\n\n" +
+        count + (count === 1 ? " violation" : " violations") + " will be struck off everywhere. It cannot be undone."
+      )) { return; }
       people[no].violations = [];
       people[no].clearedAt = new Date().toISOString();
       save(STORE_PEOPLE, people);
@@ -3323,9 +3408,25 @@
     /* --- a register arriving from elsewhere is merged in, never swapped over,
            so two devices can be brought level without either losing anything --- */
 
+    /* Records written before the grant time was recorded properly hold the
+       expiry date in its place, which is a year in the future. Anything
+       dated ahead of now is that mistake, and is corrected on sight. */
+    function repairLicence(person) {
+      if (!person || !person.licence || !person.licence.approvedAt) { return person; }
+      var when = new Date(person.licence.approvedAt);
+      if (when.getTime() > Date.now() + 86400000) {
+        when.setFullYear(when.getFullYear() - 1);
+        person.licence.approvedAt = when.toISOString();
+      }
+      return person;
+    }
+
     function mergePeople(incoming) {
       var people = loadPeople();
       var report = { people: 0, violations: 0, licences: 0 };
+
+      /* repair whatever is already on this device before anything is compared */
+      Object.keys(people).forEach(function (no) { repairLicence(people[no]); });
 
       Object.keys(incoming || {}).forEach(function (no) {
         var theirs = incoming[no];
@@ -3333,7 +3434,7 @@
         var mine = people[no];
 
         if (!mine) {
-          people[no] = theirs;
+          people[no] = repairLicence(theirs);
           report.people += 1;
           report.violations += (theirs.violations || []).length;
           if (theirs.licence) { report.licences += 1; }
@@ -3351,12 +3452,16 @@
         if (lrev) { mine.licenceRevokedAt = lrev; }
 
         if (!mine.licence && theirs.licence) {
-          mine.licence = theirs.licence;
+          mine.licence = repairLicence(theirs).licence;
           report.licences += 1;
         }
-        if (mine.licence && mine.licenceRevokedAt &&
-            new Date(mine.licence.approvedAt || 0) <= new Date(mine.licenceRevokedAt)) {
-          mine.licence = null;
+        /* only a licence granted before the withdrawal is affected; one
+           granted afterwards is a new licence and stands */
+        if (mine.licence && mine.licenceRevokedAt) {
+          var granted = mine.licence.approvedAt;
+          if (granted && new Date(granted) <= new Date(mine.licenceRevokedAt)) {
+            mine.licence = null;
+          }
         }
 
         mine.violations = mine.violations || [];
@@ -3935,6 +4040,16 @@
     syncLicenceGate(heldPassport);
     renderLicencePending(licenceApp);
     renderLicence(heldLicence);
+    /* correct any licence dated in the future before anything reads it */
+    (function repairStoredLicences() {
+      var people = loadPeople();
+      var keys = Object.keys(people);
+      if (!keys.length) { return; }
+      var before = JSON.stringify(people);
+      keys.forEach(function (no) { repairLicence(people[no]); });
+      if (JSON.stringify(people) !== before) { save(STORE_PEOPLE, people); }
+    })();
+
     refreshOfficeChrome();
     renderPeople();
     renderApplications();
@@ -3980,7 +4095,7 @@
             klass: licence.klass,
             waters: licence.waters,
             quarry: licence.quarry || "",
-            approvedAt: licence.valid
+            approvedAt: grantedAt(licence)
           };
         }
 
