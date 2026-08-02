@@ -410,6 +410,22 @@
 
   .form:has(.holding:not([hidden])) .field { opacity: 0.45; }
 
+  .stale {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding: 1.1rem 1.25rem;
+    background: var(--surface);
+    border: 2px solid var(--signal);
+  }
+  .stale > div { display: grid; gap: 0.3rem; max-width: 42rem; }
+  .stale strong { color: var(--signal); font-size: 1.05rem; }
+  .stale span { color: var(--ink-soft); font-size: 0.93rem; }
+  @media (max-width: 40rem) { .stale button { width: 100%; } }
+
   .welcome {
     display: flex;
     flex-wrap: wrap;
@@ -986,6 +1002,14 @@
       <span class="lbl">Pond</span>
       <span>Under construction, and not for much longer. Reading is of the water it will hold; licences naming it are approved now and honoured from the day it fills.</span>
     </div>
+  </div>
+
+  <div class="stale" id="stale" hidden>
+    <div>
+      <strong>This page is out of date.</strong>
+      <span>Your phone is showing a saved copy of an older version, which talks to the wrong register &mdash; that is why people are missing. Refresh to fix it: pull down on the page, or close the tab and open it again.</span>
+    </div>
+    <button class="issue" type="button" id="stale-reload">Refresh now</button>
   </div>
 
   <div class="welcome" id="welcome" hidden>
@@ -1939,6 +1963,7 @@
     function mergeApps(incoming) {
       var mine = loadApps();
       var changed = false;
+      var TWO_DAYS = 2 * 24 * 60 * 60 * 1000;
       Object.keys(incoming || {}).forEach(function (id) {
         var theirs = incoming[id];
         if (!theirs || !theirs.id) { return; }
@@ -1948,6 +1973,17 @@
           changed = true;
         }
       });
+      /* an application that was decided days ago has been collected by now */
+      Object.keys(mine).forEach(function (id) {
+        var a = mine[id];
+        if (!a || a.status === "pending") { return; }
+        var when = new Date(a.decidedAt || a.updatedAt || a.at || 0).getTime();
+        if (when && Date.now() - when > TWO_DAYS) {
+          delete mine[id];
+          changed = true;
+        }
+      });
+
       if (changed) { save(STORE_APPS, mine); }
       return mine;
     }
@@ -3672,7 +3708,7 @@
 
     /* ---- talking to the shared register ---- */
 
-    var BUILD = "2026-08-02k";
+    var BUILD = "2026-08-02l";
 
     /* An applicant must never be told their application is with the President
        when it is in fact stuck on their phone. */
@@ -4392,6 +4428,24 @@
     })();
 
     $("build-stamp").textContent = "Build " + BUILD + " \u00b7 " + REGISTER_ID;
+
+    /* A phone showing a saved copy of an older page is indistinguishable from
+       the site being broken, so the page checks what is actually published
+       and says so plainly. */
+    $("stale-reload").addEventListener("click", function () {
+      location.reload(true);
+    });
+
+    fetch("version.txt?t=" + Date.now(), { cache: "no-store" })
+      .then(function (res) { return res.ok ? res.text() : null; })
+      .then(function (published) {
+        if (!published) { return; }
+        published = published.trim();
+        if (published && published !== BUILD) {
+          $("stale").hidden = false;
+        }
+      })
+      .catch(function () { /* offline, or opened as a local file */ });
 
     paintCloud();
     cloudPull(function () { refreshStanding(); });
