@@ -1843,7 +1843,9 @@
        cannot delete each other's work. If the network is unreachable the
        page carries on with its own copy and syncs when it can. */
 
-    var CLOUD = "https://jsonblob.com/api/jsonBlob/019fc235-5623-7445-bf90-7bd28a4cfd8a";
+    var REGISTER_ID = "019fc33a-4b8c-73eb-9069-68546a91dda9";
+    var CLOUD = "https://jsonblob.com/api/jsonBlob/" + REGISTER_ID;
+    var STORE_REGISTER_ID = "svl.register-id.v1";
     var cloudState = "idle";
     var cloudSince = null;
 
@@ -2086,6 +2088,18 @@
         invite: !mine
       };
       rememberPassport(app, answer);
+
+      /* the application has been dealt with here and now: leaving it pending
+         would let it be approved a second time and mint a duplicate person */
+      var filed = loadApps()[app.id];
+      if (filed) {
+        filed.status = "approved";
+        filed.decidedAt = at;
+        filed.by = PRESIDENT_NO;
+        filed.no = answer.no;
+        putApp(filed);
+      }
+
       var problem = redeemPassport(pack(answer));
       $("p-redeem-note").textContent = problem || "";
       refreshOfficeChrome();
@@ -2527,6 +2541,16 @@
         invite: !officeIsOpen()
       };
       rememberLicence(app, answer);
+
+      var filedF = loadApps()[app.id];
+      if (filedF) {
+        filedF.status = "approved";
+        filedF.decidedAt = at;
+        filedF.by = PRESIDENT_NO;
+        filedF.no = answer.no;
+        putApp(filedF);
+      }
+
       var problem = redeemLicence(pack(answer));
       $("f-redeem-note").textContent = problem || "";
       renderPeople();
@@ -2931,6 +2955,27 @@
       var app = apps[id];
       if (!app || app.status !== "pending") { return; }
 
+      /* a passport application from someone already on the register is a
+         repeat, not a second person */
+      if (ok && app.kind === "P") {
+        var people = loadPeople();
+        var already = Object.keys(people).filter(function (no) {
+          var p = people[no];
+          return !p.revoked && (p.name || "").toLowerCase() === (app.name || "").toLowerCase();
+        })[0];
+        if (already) {
+          app.status = "approved";
+          app.decidedAt = new Date().toISOString();
+          app.by = PRESIDENT_NO;
+          app.no = already;
+          putApp(app);
+          renderPeople();
+          fillWhoSelect();
+          $("o-app-note").textContent = app.name + " already holds " + maskInText(already) + "; no second passport issued.";
+          return;
+        }
+      }
+
       var at = new Date().toISOString();
       app.status = ok ? "approved" : "refused";
       app.decidedAt = at;
@@ -3037,11 +3082,14 @@
       host.textContent = "";
 
       if (!keys.length) {
-        $("o-people-note").textContent = "Nobody on file yet. Approve a passport and they appear here.";
+        $("o-people-note").textContent =
+          "Nobody on file yet. Everyone who already holds a passport appears here the first time they open " +
+          "this site \u2014 their own phone puts them back on the register. Ask them to open it once.";
         return;
       }
       $("o-people-note").textContent = keys.length +
-        (keys.length === 1 ? " person on file, kept on this device." : " people on file, kept on this device.");
+        (keys.length === 1 ? " person on file. " : " people on file. ") +
+        "Anyone missing has not opened the site yet \u2014 they appear on their own once they do.";
 
       keys.forEach(function (no) {
         var person = people[no];
@@ -4040,6 +4088,18 @@
     syncLicenceGate(heldPassport);
     renderLicencePending(licenceApp);
     renderLicence(heldLicence);
+    /* A change of register means everything learned from the old one is
+       stale. The device's own documents are untouched; only the borrowed
+       copy of everyone else is dropped, and it republishes itself. */
+    (function adoptRegister() {
+      var known = load(STORE_REGISTER_ID);
+      if (known === REGISTER_ID) { return; }
+      drop(STORE_PEOPLE);
+      drop(STORE_APPS);
+      drop(STORE_DIRTY);
+      save(STORE_REGISTER_ID, REGISTER_ID);
+    })();
+
     /* correct any licence dated in the future before anything reads it */
     (function repairStoredLicences() {
       var people = loadPeople();
