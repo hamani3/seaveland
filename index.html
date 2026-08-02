@@ -3658,7 +3658,7 @@
 
     /* ---- talking to the shared register ---- */
 
-    var BUILD = "2026-08-02f";
+    var BUILD = "2026-08-02h";
 
     /* An applicant must never be told their application is with the President
        when it is in fact stuck on their phone. */
@@ -3692,7 +3692,7 @@
         cloudState === "syncing" ? "Syncing\u2026" :
         cloudState === "synced" ? "In step with the shared register" +
           (cloudSince ? " \u2014 " + cloudSince.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "") :
-        cloudState === "guarded" ? "Waiting to read the register before writing, so nothing of anyone else's is lost." :
+        cloudState === "guarded" ? "Waiting to read the register before writing anything, so nothing of anyone else's is lost." :
         cloudState === "busy" ? "The shared register is asking for a moment \u2014 what you did is saved here and will go through shortly." :
         cloudState === "offline" ? "Cannot reach the shared register. This device is working from its own copy and will catch up when it can." :
         "Not checked yet.";
@@ -3748,7 +3748,11 @@
     }
 
     function fetchRegister() {
-      return fetch(CLOUD, { cache: "no-store" }).then(function (res) {
+      /* Some networks and proxies will happily hand back a copy of the
+         register from a minute ago, which looks exactly like data going
+         missing. A unique address every time makes that impossible. */
+      var fresh = CLOUD + (CLOUD.indexOf("?") === -1 ? "?" : "&") + "t=" + Date.now();
+      return fetch(fresh, { cache: "no-store", headers: { "Cache-Control": "no-cache" } }).then(function (res) {
         if (res.status === 429) { throw new Error("busy"); }
         if (!res.ok) { throw new Error("read " + res.status); }
         return res.json();
@@ -3759,7 +3763,10 @@
       cloudBusy = false;
       cloudLast = Date.now();
       var kind = String(err && err.message);
-      cloudMark(!err ? "synced" : kind === "busy" ? "busy" : kind === "would-shrink" ? "guarded" : "offline");
+      cloudMark(!err ? "synced"
+        : kind === "busy" ? "busy"
+        : (kind === "would-shrink" || kind === "no-read-yet") ? "guarded"
+        : "offline");
       if (done) { done(err || null); }
     }
 
@@ -3809,15 +3816,11 @@
       cloudHold();
       cloudMark("syncing");
 
-      /* Read first so nothing of anyone else's is written over \u2014 but the
-         register refuses reads far more readily than writes, and a refused
-         read must not stop the write: what this device knows still has to
-         get out. Anything missed is put back by whoever owns it on their
-         next sync. */
-      var fresh = cloudSynced && Date.now() - cloudLast < 12000;
-      var prepare = fresh
-        ? Promise.resolve(null)
-        : fetchRegister().catch(function () { return null; });
+      /* ALWAYS read immediately before writing. An earlier version skipped
+         this when it had read a few seconds ago, and that window was long
+         enough for somebody else's application to arrive and then be written
+         over. One extra request is a small price for not losing it. */
+      var prepare = fetchRegister().catch(function () { return null; });
 
       prepare.then(function (body) {
         if (body) {
@@ -3827,13 +3830,16 @@
           mergeApps(body.applications || {});
         }
 
-        /* A device that could not read first must never write less than the
-           register is known to hold: an empty phone would otherwise erase
-           everyone. Better to wait and try again with a proper read. */
+        /* Two rules, both learned the hard way.
+           First: a device may not write anything until it has managed to
+           read the register at least once. A phone that has never seen what
+           is out there cannot be allowed to replace it.
+           Second: even afterwards, it may never write less than the register
+           was last known to hold. */
+        if (!cloudSynced) { throw new Error("no-read-yet"); }
+
         var about = Object.keys(loadPeople()).length + Object.keys(loadApps()).length;
-        if (!body && about < lastSeenSize) {
-          throw new Error("would-shrink");
-        }
+        if (!body && about < lastSeenSize) { throw new Error("would-shrink"); }
 
         return fetch(CLOUD, {
           method: "PUT",
