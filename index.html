@@ -1908,9 +1908,23 @@
        cannot delete each other's work. If the network is unreachable the
        page carries on with its own copy and syncs when it can. */
 
-    var REGISTER_ID = "019fc33a-4b8c-73eb-9069-68546a91dda9";
-    var CLOUD = "https://jsonblob.com/api/jsonBlob/" + REGISTER_ID;
+    var REGISTER_ID = "office-db-v1";
+    var DB = "https://dnokspvoldiedthptzih.supabase.co";
+    var DB_KEY = "sb_publishable_-9bcCUOanRsN5TEM1V3hAA_3-Jy5O6e";
+    var DB_ROW = DB + "/rest/v1/register?id=eq.1";
     var STORE_REGISTER_ID = "svl.register-id.v1";
+
+    /* The publishable key is meant to sit in a public page: it can do exactly
+       what the table's policies allow and nothing else. */
+    function dbHeaders(extra) {
+      var h = {
+        "apikey": DB_KEY,
+        "Authorization": "Bearer " + DB_KEY,
+        "Content-Type": "application/json"
+      };
+      Object.keys(extra || {}).forEach(function (k) { h[k] = extra[k]; });
+      return h;
+    }
     var cloudState = "idle";
     var cloudSince = null;
 
@@ -3658,7 +3672,7 @@
 
     /* ---- talking to the shared register ---- */
 
-    var BUILD = "2026-08-02h";
+    var BUILD = "2026-08-02k";
 
     /* An applicant must never be told their application is with the President
        when it is in fact stuck on their phone. */
@@ -3713,7 +3727,7 @@
     var cloudBusySince = 0;
     var cloudLast = 0;
     var cloudQueued = false;
-    var CLOUD_GAP = 4000;
+    var CLOUD_GAP = 6000;
     var cloudRetries = 0;
     var cloudSynced = false;
     var lastSeenSize = 0;
@@ -3751,11 +3765,29 @@
       /* Some networks and proxies will happily hand back a copy of the
          register from a minute ago, which looks exactly like data going
          missing. A unique address every time makes that impossible. */
-      var fresh = CLOUD + (CLOUD.indexOf("?") === -1 ? "?" : "&") + "t=" + Date.now();
-      return fetch(fresh, { cache: "no-store", headers: { "Cache-Control": "no-cache" } }).then(function (res) {
+      /* No cache-busting parameter here: the database reads any unknown
+         parameter as a column filter and rejects the request. The no-store
+         headers are enough, and this endpoint is not cached anyway. */
+      var fresh = DB_ROW + "&select=data";
+      return fetch(fresh, {
+        cache: "no-store",
+        headers: dbHeaders({ "Cache-Control": "no-cache", "Accept": "application/json" })
+      }).then(function (res) {
         if (res.status === 429) { throw new Error("busy"); }
         if (!res.ok) { throw new Error("read " + res.status); }
         return res.json();
+      }).then(function (rows) {
+        var row = Array.isArray(rows) ? rows[0] : null;
+        return row ? row.data : null;
+      }).then(function (body) {
+        /* The register sometimes answers "200 OK" with a refusal in the body.
+           Trusting that would read as an empty register, which is exactly how
+           a page concludes everybody's documents have vanished. A reply only
+           counts if it actually looks like the register. */
+        var looksRight = body && typeof body === "object" && !body.error &&
+          (body.office === "seaveland" || body.people || body.applications);
+        if (!looksRight) { throw new Error("busy"); }
+        return body;
       });
     }
 
@@ -3841,15 +3873,18 @@
         var about = Object.keys(loadPeople()).length + Object.keys(loadApps()).length;
         if (!body && about < lastSeenSize) { throw new Error("would-shrink"); }
 
-        return fetch(CLOUD, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+        return fetch(DB_ROW, {
+          method: "PATCH",
+          headers: dbHeaders({ "Prefer": "return=minimal" }),
           body: JSON.stringify({
-            office: "seaveland",
-            version: 3,
-            updatedAt: new Date().toISOString(),
-            people: loadPeople(),
-            applications: loadApps()
+            data: {
+              office: "seaveland",
+              version: 5,
+              updatedAt: new Date().toISOString(),
+              people: loadPeople(),
+              applications: loadApps()
+            },
+            updated_at: new Date().toISOString()
           })
         });
       }).then(function (res) {
@@ -4271,9 +4306,11 @@
        documents, and for the Office its whole list \u2014 onto the register the
        first time it opens with sync working. Nobody has to re-apply. */
     function publishWhatThisDeviceHolds() {
+      var changed = false;
       var mine = load(STORE_P);
       if (mine && mine.no) {
         var people = loadPeople();
+        var before = JSON.stringify(people[mine.no] || null);
         var person = people[mine.no] || { violations: [] };
         person.passport = mine.no;
         person.name = person.name || mine.name;
@@ -4296,14 +4333,18 @@
         }
 
         people[mine.no] = person;
-        save(STORE_PEOPLE, people);
-        renderPeople();
-        fillWhoSelect();
+        changed = JSON.stringify(person) !== before;
+        if (changed) {
+          save(STORE_PEOPLE, people);
+          renderPeople();
+          fillWhoSelect();
+        }
       }
 
-      /* cloudPush folds the register into this device and writes the union,
-         so everything either side knows ends up on both */
-      if (Object.keys(loadPeople()).length) { cloudPush(); }
+      /* Only write if this device actually knows something the register does
+         not. Writing on every page load is what exhausts the free register's
+         patience and produces "cannot reach the Office". */
+      if (hasUnsent() || changed) { cloudPush(); }
     }
 
     function refreshFromRegister() {
@@ -4350,7 +4391,7 @@
       mark(sections[0]);
     })();
 
-    $("build-stamp").textContent = "Build " + BUILD + " \u00b7 register " + REGISTER_ID.slice(0, 8);
+    $("build-stamp").textContent = "Build " + BUILD + " \u00b7 " + REGISTER_ID;
 
     paintCloud();
     cloudPull(function () { refreshStanding(); });
