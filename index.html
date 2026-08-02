@@ -369,6 +369,23 @@
     padding-left: 0.7rem;
   }
 
+  .holding {
+    display: grid;
+    gap: 0.3rem;
+    border-left: 3px solid var(--accent);
+    padding-left: 0.8rem;
+    font-size: 0.9rem;
+  }
+  .holding span { color: var(--ink-soft); }
+  .note.warn { color: var(--signal); }
+  .holding #p-holding-no, .holding #f-holding-no {
+    font-family: var(--data);
+    font-size: 0.85rem;
+    color: var(--accent);
+  }
+
+  .form:has(.holding:not([hidden])) .field { opacity: 0.45; }
+
   .invited, .receipt {
     display: grid;
     gap: 0.4rem;
@@ -903,6 +920,11 @@
 
     <div class="app">
       <form class="form" id="p-form" novalidate>
+        <div class="holding" id="p-holding" hidden>
+          <strong>You already hold a passport.</strong>
+          <span id="p-holding-no">&mdash;</span>
+          <span>Seaveland issues one to a person. Surrender the one you have if you need a different one.</span>
+        </div>
         <div class="field">
           <label for="p-name">Name as it should appear</label>
           <input type="text" id="p-name" autocomplete="off" maxlength="40" placeholder="Given and family name">
@@ -1044,6 +1066,11 @@
     <div class="app">
       <form class="form" id="f-form" novalidate>
         <div class="gate" id="f-gate" hidden>No passport on file. Get one issued first &mdash; the licence is endorsed onto it.</div>
+        <div class="holding" id="f-holding" hidden>
+          <strong>You already hold a licence.</strong>
+          <span id="f-holding-no">&mdash;</span>
+          <span>Surrender it if you want one of a different class or for different waters.</span>
+        </div>
         <div class="field">
           <label for="f-holder">Holder</label>
           <input type="text" id="f-holder" autocomplete="off" readonly placeholder="Taken from your passport">
@@ -1235,6 +1262,26 @@
         <div class="pane" id="pane-people" role="tabpanel" aria-labelledby="tab-people" hidden>
           <p class="note" id="o-people-note">Everyone the Office has issued to, kept on this device.</p>
           <div id="o-people"></div>
+          <div class="field">
+            <span class="flabel">Shared register</span>
+            <div class="note" id="o-cloud">Not checked yet.</div>
+            <div class="actions">
+              <button class="minor" type="button" id="o-sync">Sync now</button>
+            </div>
+          </div>
+
+          <div class="field subrule" style="padding-top: 1.05rem;">
+            <span class="flabel">A copy you keep yourself</span>
+            <div class="actions">
+              <button class="minor" type="button" id="o-export">Save the Office to a file</button>
+              <label class="filebtn" for="o-import">
+                <span id="o-import-label">Load a saved Office</span>
+                <input type="file" id="o-import" accept="application/json,.json">
+              </label>
+            </div>
+            <div class="note" id="o-file-note">Everyone on file, their licences and their violations, in one file. Save it on this device, open it on another, and both hold the same register. Loading merges &mdash; it never wipes what is already there.</div>
+          </div>
+
           <div class="field subrule" style="padding-top: 1.05rem;">
             <label for="o-invite">Invitation link</label>
             <input type="text" id="o-invite" readonly placeholder="A link that issues passports without asking you">
@@ -1759,6 +1806,18 @@
 
     /* ================= the people the Office remembers ================= */
 
+    /* ================= the shared register =================
+       One register for all of Seaveland, kept off-device so that a passport
+       issued on one phone and a violation recorded on another are the same
+       facts everywhere. Every change is merged into what is already up
+       there rather than written over it, so two people editing at once
+       cannot delete each other's work. If the network is unreachable the
+       page carries on with its own copy and syncs when it can. */
+
+    var CLOUD = "https://jsonblob.com/api/jsonBlob/019fc235-5623-7445-bf90-7bd28a4cfd8a";
+    var cloudState = "idle";
+    var cloudSince = null;
+
     function loadPeople() {
       var raw = load(STORE_PEOPLE);
       return (raw && typeof raw === "object") ? raw : {};
@@ -1914,6 +1973,10 @@
       var name = value("p-name");
       if (!name) { $("p-name").focus(); return; }
 
+      /* a browser already holding a passport cannot mint itself another */
+      var already = load(STORE_P);
+      if (already && !(already.no === PRESIDENT_NO && officeIsOpen())) { return; }
+
       var app = {
         kind: "P",
         name: name,
@@ -1957,12 +2020,13 @@
         by: PRESIDENT_NO,
         invite: !mine
       };
-      if (mine) { rememberPassport(app, answer); }
+      rememberPassport(app, answer);
       var problem = redeemPassport(pack(answer));
       $("p-redeem-note").textContent = problem || "";
       refreshOfficeChrome();
       renderPeople();
       fillWhoSelect();
+      cloudPush();
       if (!problem) { $("p-doc").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
     }
 
@@ -2068,6 +2132,7 @@
       renderPassport(p);
       syncLicenceGate(p);
       $("v-no").value = p.no;
+      cloudPush();
       return null;
     }
 
@@ -2281,6 +2346,9 @@
       /* surrendering hands the document back, it does not burn the record:
          the archive keeps it, and the number brings it out again */
       var giving = load(STORE_P);
+      /* the President handing in their own passport keeps the Office open,
+         or they could not issue themselves a replacement */
+      if (giving && giving.no === PRESIDENT_NO && officeIsOpen()) { save(STORE_KEY, true); }
       if (giving && giving.no) {
         var all = loadArchive();
         if (all[giving.no]) {
@@ -2306,6 +2374,7 @@
       renderLicencePending(null);
       renderLicence(null);
       syncLicenceGate(null);
+      refreshOfficeChrome();
     });
 
     /* ================= this device's licence ================= */
@@ -2354,6 +2423,7 @@
       ev.preventDefault();
       var p = load(STORE_P);
       if (!p) { syncLicenceGate(null); return; }
+      if (load(STORE_F)) { return; }
 
       var app = {
         kind: "F",
@@ -2390,11 +2460,12 @@
         by: PRESIDENT_NO,
         invite: !officeIsOpen()
       };
-      if (officeIsOpen()) { rememberLicence(app, answer); }
+      rememberLicence(app, answer);
       var problem = redeemLicence(pack(answer));
       $("f-redeem-note").textContent = problem || "";
       renderPeople();
       fillWhoSelect();
+      cloudPush();
       if (!problem) { $("f-doc").scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" }); }
     }
 
@@ -2461,6 +2532,7 @@
       $("f-target").value = "";
       $("f-note").textContent = "";
       renderLicence(null);
+      refreshIssueChrome();
     });
 
     /* ================= public register ================= */
@@ -2602,6 +2674,30 @@
       $("p-submit").textContent = straight ? "Issue passport" : "Send for approval";
       $("f-submit").textContent = straight ? "Issue licence" : "Send for approval";
       $("p-invited").hidden = !isInvited() || officeIsOpen();
+
+      /* one to a person: a held document closes its own form. The President
+         is the exception, since their number is fixed and they may need to
+         put their real name on it after signing in somewhere new. */
+      var heldP = load(STORE_P);
+      var heldF = load(STORE_F);
+      var amending = !!heldP && heldP.no === PRESIDENT_NO && officeIsOpen();
+      var blockP = !!heldP && !amending;
+
+      $("p-holding").hidden = !blockP;
+      $("p-submit").disabled = blockP;
+      if (heldP) { $("p-holding-no").textContent = maskInText(heldP.no); }
+      $("p-submit").textContent = amending ? "Update my details"
+        : straight ? "Issue passport" : "Send for approval";
+      ["p-name", "p-title", "p-known", "p-mark", "p-first", "p-photo"].forEach(function (id) {
+        $(id).disabled = blockP;
+      });
+
+      $("f-holding").hidden = !heldF;
+      if (heldF) { $("f-holding-no").textContent = heldF.no; }
+      $("f-submit").disabled = !!heldF || !heldP;
+      ["f-class", "f-waters", "f-target"].forEach(function (id) {
+        $(id).disabled = !!heldF || !heldP;
+      });
     }
 
     $("o-unlock").addEventListener("click", function () {
@@ -2717,6 +2813,7 @@
       reading = null;
       renderPeople();
       fillWhoSelect();
+      if (ok) { cloudPush(); }
     }
 
     $("o-approve").addEventListener("click", function () { answerApplication(true); });
@@ -2874,7 +2971,8 @@
       save(STORE_PEOPLE, people);
 
       $("o-particulars").value = "";
-      $("o-viol-note").textContent = "Recorded against " + person.name + ".";
+      cloudPush();
+      $("o-viol-note").textContent = "Recorded against " + person.name + ". It is on the shared register now.";
       $("v-no").value = person.licence ? person.licence.no : person.passport;
       renderRecord(normaliseNo($("v-no").value));
       renderPeople();
@@ -2886,8 +2984,10 @@
       var people = loadPeople();
       if (!people[no]) { return; }
       people[no].violations = [];
+      people[no].clearedAt = new Date().toISOString();
       save(STORE_PEOPLE, people);
-      $("o-viol-note").textContent = people[no].name + "'s record is clear. It never happened.";
+      cloudPush();
+      $("o-viol-note").textContent = people[no].name + "'s record is clear everywhere. It never happened.";
       renderRecord(normaliseNo(people[no].licence ? people[no].licence.no : no));
       renderPeople();
     });
@@ -2993,6 +3093,7 @@
 
       renderPeople();
       fillWhoSelect();
+      cloudPush();
       $("tab-people").click();
       $("o-people-note").textContent = body.name + " filed from a receipt.";
     }
@@ -3047,42 +3148,215 @@
       }
     }
 
-    /* --- a register arriving by link is merged in, never swapped over --- */
+    /* --- a register arriving from elsewhere is merged in, never swapped over,
+           so two devices can be brought level without either losing anything --- */
 
-    (function importFromHash() {
-      var match = /(?:^|[#&])register=([^&]+)/.exec(location.hash);
-      if (!match) { return; }
-      var payload = unpack(match[1]);
-      if (!payload || !payload.people) { return; }
-
+    function mergePeople(incoming) {
       var people = loadPeople();
-      var added = 0;
+      var report = { people: 0, violations: 0, licences: 0 };
 
-      Object.keys(payload.people).forEach(function (no) {
-        var theirs = payload.people[no];
+      Object.keys(incoming || {}).forEach(function (no) {
+        var theirs = incoming[no];
+        if (!theirs || !theirs.passport) { return; }
         var mine = people[no];
+
         if (!mine) {
           people[no] = theirs;
-          added += (theirs.violations || []).length;
+          report.people += 1;
+          report.violations += (theirs.violations || []).length;
+          if (theirs.licence) { report.licences += 1; }
           return;
         }
-        ["name", "title", "photo", "licence", "issued"].forEach(function (k) {
+
+        ["name", "title", "known", "mark", "first", "photo", "issued"].forEach(function (k) {
           if (!mine[k] && theirs[k]) { mine[k] = theirs[k]; }
         });
+        if (!mine.licence && theirs.licence) {
+          mine.licence = theirs.licence;
+          report.licences += 1;
+        }
+
         mine.violations = mine.violations || [];
         var seen = {};
         mine.violations.forEach(function (v) { seen[v.at + "|" + v.offence] = true; });
         (theirs.violations || []).forEach(function (v) {
           if (!v || !v.at || !v.offence || seen[v.at + "|" + v.offence]) { return; }
           mine.violations.push(v);
-          added += 1;
+          report.violations += 1;
         });
+
+        /* a wiped record must stay wiped, or the merge would resurrect it:
+           the later wipe wins and everything older than it is dropped */
+        var cleared = [mine.clearedAt, theirs.clearedAt]
+          .filter(Boolean)
+          .sort(function (x, y) { return new Date(y) - new Date(x); })[0];
+        if (cleared) {
+          mine.clearedAt = cleared;
+          mine.violations = mine.violations.filter(function (v) {
+            return new Date(v.at) > new Date(cleared);
+          });
+        }
       });
 
       save(STORE_PEOPLE, people);
-      $("o-share-note").textContent = added
-        ? added + " entr" + (added === 1 ? "y" : "ies") + " received from the link."
-        : "That link held nothing this browser did not already have.";
+      renderPeople();
+      fillWhoSelect();
+      return report;
+    }
+
+    /* ---- talking to the shared register ---- */
+
+    function paintCloud() {
+      var el = $("o-cloud");
+      if (!el) { return; }
+      el.textContent =
+        cloudState === "syncing" ? "Syncing\u2026" :
+        cloudState === "synced" ? "In step with the shared register" +
+          (cloudSince ? " \u2014 " + cloudSince.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "") :
+        cloudState === "busy" ? "The shared register is asking for a moment \u2014 this will go through shortly." :
+        cloudState === "offline" ? "Cannot reach the shared register. This device is working from its own copy and will catch up when it can." :
+        "Not checked yet.";
+      el.className = "note" + (cloudState === "offline" || cloudState === "busy" ? " warn" : "");
+    }
+
+    function cloudMark(state) {
+      cloudState = state;
+      if (state === "synced") { cloudSince = new Date(); }
+      paintCloud();
+    }
+
+    /* The register is a free, shared service with a request limit, so the
+       page is deliberately frugal: never two calls at once, never more than
+       one every few seconds, and a patient retry when it says slow down. */
+    var cloudBusy = false;
+    var cloudLast = 0;
+    var cloudQueued = false;
+    var CLOUD_GAP = 4000;
+
+    function cloudReady() {
+      return !cloudBusy && Date.now() - cloudLast > CLOUD_GAP;
+    }
+
+    function fetchRegister() {
+      return fetch(CLOUD, { cache: "no-store" }).then(function (res) {
+        if (res.status === 429) { throw new Error("busy"); }
+        if (!res.ok) { throw new Error("read " + res.status); }
+        return res.json();
+      });
+    }
+
+    function cloudFinish(err, done) {
+      cloudBusy = false;
+      cloudLast = Date.now();
+      cloudMark(err ? (String(err.message) === "busy" ? "busy" : "offline") : "synced");
+      if (done) { done(err || null); }
+    }
+
+    /* pull: take everything the register knows and fold it in */
+    function cloudPull(done) {
+      if (cloudBusy) { return; }
+      cloudBusy = true;
+      cloudMark("syncing");
+      fetchRegister().then(function (body) {
+        var report = mergePeople((body && body.people) || {});
+        cloudBusy = false;
+        cloudLast = Date.now();
+        cloudMark("synced");
+        if (done) { done(null, report); }
+      }).catch(function (err) { cloudFinish(err, done); });
+    }
+
+    /* push: read first, fold ours on top, write the union back. Writes that
+       arrive while one is in flight are collapsed into a single later one. */
+    function cloudPush(done) {
+      if (cloudBusy || !cloudReady()) {
+        if (!cloudQueued) {
+          cloudQueued = true;
+          setTimeout(function () { cloudQueued = false; cloudPush(); }, CLOUD_GAP);
+        }
+        return;
+      }
+      cloudBusy = true;
+      cloudMark("syncing");
+      fetchRegister().then(function (body) {
+        mergePeople((body && body.people) || {});
+        return fetch(CLOUD, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            office: "seaveland",
+            version: 3,
+            updatedAt: new Date().toISOString(),
+            people: loadPeople()
+          })
+        });
+      }).then(function (res) {
+        if (res.status === 429) { throw new Error("busy"); }
+        if (!res.ok) { throw new Error("write " + res.status); }
+        cloudFinish(null, done);
+      }).catch(function (err) {
+        cloudFinish(err, done);
+        /* a rate limit is temporary: try the write again shortly */
+        if (String(err.message) === "busy" && !cloudQueued) {
+          cloudQueued = true;
+          setTimeout(function () { cloudQueued = false; cloudPush(); }, 12000);
+        }
+      });
+    }
+
+    function mergeReport(report) {
+      var bits = [];
+      if (report.people) { bits.push(report.people + (report.people === 1 ? " person" : " people")); }
+      if (report.licences) { bits.push(report.licences + (report.licences === 1 ? " licence" : " licences")); }
+      if (report.violations) { bits.push(report.violations + (report.violations === 1 ? " violation" : " violations")); }
+      return bits.length ? "Added " + bits.join(", ") + "." : "Nothing new \u2014 both copies already matched.";
+    }
+
+    /* the whole Office as a file, for moving between your own devices */
+    $("o-export").addEventListener("click", function () {
+      var people = loadPeople();
+      if (!Object.keys(people).length) {
+        $("o-file-note").textContent = "Nothing on file to save yet.";
+        return;
+      }
+      var body = JSON.stringify({ office: "seaveland", version: 2, saved: new Date().toISOString(), people: people }, null, 1);
+      var blob = new Blob([body], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "seaveland-office.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      $("o-file-note").textContent = "Saved " + Object.keys(people).length +
+        " on file. Open this file in the Office on your other device.";
+    });
+
+    $("o-import").addEventListener("change", function (ev) {
+      var file = ev.target.files && ev.target.files[0];
+      if (!file) { return; }
+      var reader = new FileReader();
+      reader.onload = function () {
+        var payload;
+        try { payload = JSON.parse(String(reader.result)); } catch (e) { payload = null; }
+        if (!payload || !payload.people) {
+          $("o-file-note").textContent = "That file is not a saved Office.";
+          return;
+        }
+        $("o-file-note").textContent = mergeReport(mergePeople(payload.people));
+      };
+      reader.onerror = function () { $("o-file-note").textContent = "That file could not be read."; };
+      reader.readAsText(file);
+      ev.target.value = "";
+    });
+
+    (function importFromHash() {
+      var match = /(?:^|[#&])register=([^&]+)/.exec(location.hash);
+      if (!match) { return; }
+      var payload = unpack(match[1]);
+      if (!payload || !payload.people) { return; }
+      $("o-share-note").textContent = mergeReport(mergePeople(payload.people));
     })();
 
     /* ================= save as image ================= */
@@ -3394,6 +3668,33 @@
     takeReceiptFromLink();
     refreshIssueChrome();
     refreshReceiptChrome();
+
+    /* ---- keep in step with the shared register ---- */
+
+    $("o-sync").addEventListener("click", function () {
+      cloudPull(function (err, report) {
+        if (!err && report) { $("o-file-note").textContent = mergeReport(report); }
+      });
+    });
+
+    function refreshFromRegister() {
+      cloudPull(function (err) {
+        if (err) { return; }
+        var showing = normaliseNo($("v-no").value);
+        if (showing && !$("v-record").hidden) { renderRecord(showing); }
+        refreshStanding();
+      });
+    }
+
+    paintCloud();
+    refreshFromRegister();
+
+    /* a quiet poll so a violation recorded elsewhere turns up on its own,
+       and an immediate check whenever the page is looked at again */
+    setInterval(refreshFromRegister, 60000);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) { refreshFromRegister(); }
+    });
   })();
 </script>
 
