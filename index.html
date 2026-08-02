@@ -2643,7 +2643,37 @@
       ev.preventDefault();
       var no = normaliseNo($("v-no").value);
       if (!no) { $("v-no").focus(); return; }
-      renderRecord(no);
+
+      /* Telling someone their own passport does not exist is the worst thing
+         this page can do, so it never says so from a local copy alone: if the
+         number is not known here, the register is asked first. */
+      var people = loadPeople();
+      if (personOf(people, no) || selfAsPerson(no)) { renderRecord(no); return; }
+
+      $("v-record").hidden = false;
+      $("v-no-out").textContent = no;
+      $("v-holder-out").textContent = "Checking the register\u2026";
+      $("v-pill").textContent = "Checking";
+      $("v-pill").className = "pill clear";
+      $("v-list").textContent = "";
+      paintMug($("v-mug"), null);
+
+      cloudPull(function (err) {
+        if (err) {
+          $("v-holder-out").textContent = "The register could not be reached just now \u2014 still trying.";
+          /* the pull retries on its own; show the answer when it lands */
+          var waited = 0;
+          var watch = setInterval(function () {
+            waited += 2000;
+            if (cloudSynced || waited > 40000) {
+              clearInterval(watch);
+              renderRecord(no);
+            }
+          }, 2000);
+          return;
+        }
+        renderRecord(no);
+      });
     });
 
     /* ================= the Office ================= */
@@ -3213,7 +3243,7 @@
         cloudState === "syncing" ? "Syncing\u2026" :
         cloudState === "synced" ? "In step with the shared register" +
           (cloudSince ? " \u2014 " + cloudSince.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : "") :
-        cloudState === "busy" ? "The shared register is asking for a moment \u2014 this will go through shortly." :
+        cloudState === "busy" ? "The shared register is asking for a moment \u2014 what you did is saved here and will go through shortly." :
         cloudState === "offline" ? "Cannot reach the shared register. This device is working from its own copy and will catch up when it can." :
         "Not checked yet.";
       el.className = "note" + (cloudState === "offline" || cloudState === "busy" ? " warn" : "");
@@ -3232,6 +3262,21 @@
     var cloudLast = 0;
     var cloudQueued = false;
     var CLOUD_GAP = 4000;
+    var cloudRetries = 0;
+    var cloudSynced = false;
+    var STORE_DIRTY = "svl.unsent.v2";
+
+    /* A change made here is written down as unsent until the register has
+       actually taken it. Every later sync \u2014 the poll, coming back to the
+       tab, opening the page tomorrow \u2014 tries again, so a write cannot be
+       lost to a rate limit or a dropped connection. */
+    function markUnsent() {
+      save(STORE_DIRTY, true);
+    }
+
+    function hasUnsent() {
+      return load(STORE_DIRTY) === true;
+    }
 
     function cloudReady() {
       return !cloudBusy && Date.now() - cloudLast > CLOUD_GAP;
@@ -3252,7 +3297,12 @@
       if (done) { done(err || null); }
     }
 
-    /* pull: take everything the register knows and fold it in */
+    /* pull: take everything the register knows and fold it in. A refusal is
+       almost always the free store asking for a pause, so keep trying: a
+       device that gave up here would show an empty register and tell people
+       their documents do not exist. */
+    var pullRetries = 0;
+
     function cloudPull(done) {
       if (cloudBusy) { return; }
       cloudBusy = true;
@@ -3261,14 +3311,23 @@
         var report = mergePeople((body && body.people) || {});
         cloudBusy = false;
         cloudLast = Date.now();
+        pullRetries = 0;
+        cloudSynced = true;
         cloudMark("synced");
         if (done) { done(null, report); }
-      }).catch(function (err) { cloudFinish(err, done); });
+      }).catch(function (err) {
+        cloudFinish(err, done);
+        if (pullRetries < 6) {
+          pullRetries += 1;
+          setTimeout(function () { cloudPull(); }, 5000 * pullRetries);
+        }
+      });
     }
 
     /* push: read first, fold ours on top, write the union back. Writes that
        arrive while one is in flight are collapsed into a single later one. */
     function cloudPush(done) {
+      markUnsent();
       if (cloudBusy || !cloudReady()) {
         if (!cloudQueued) {
           cloudQueued = true;
@@ -3293,13 +3352,17 @@
       }).then(function (res) {
         if (res.status === 429) { throw new Error("busy"); }
         if (!res.ok) { throw new Error("write " + res.status); }
+        cloudRetries = 0;
+        drop(STORE_DIRTY);
         cloudFinish(null, done);
       }).catch(function (err) {
         cloudFinish(err, done);
-        /* a rate limit is temporary: try the write again shortly */
-        if (String(err.message) === "busy" && !cloudQueued) {
+        /* rate limits and dropped connections are both temporary; keep
+           trying, slowly, rather than leaving this device unpublished */
+        if (!cloudQueued) {
           cloudQueued = true;
-          setTimeout(function () { cloudQueued = false; cloudPush(); }, 12000);
+          cloudRetries = Math.min(cloudRetries + 1, 4);
+          setTimeout(function () { cloudQueued = false; cloudPush(); }, 8000 * cloudRetries);
         }
       });
     }
@@ -3677,21 +3740,67 @@
       });
     });
 
+    /* Anyone issued before there was a shared register only exists on the
+       device that issued them. So every device puts what it holds \u2014 its own
+       documents, and for the Office its whole list \u2014 onto the register the
+       first time it opens with sync working. Nobody has to re-apply. */
+    function publishWhatThisDeviceHolds() {
+      var mine = load(STORE_P);
+      if (mine && mine.no) {
+        var people = loadPeople();
+        var person = people[mine.no] || { violations: [] };
+        person.passport = mine.no;
+        person.name = person.name || mine.name;
+        person.title = person.title || mine.title || "";
+        person.known = person.known || mine.known || "";
+        person.mark = person.mark || mine.mark || "";
+        person.first = person.first || mine.first || "";
+        person.issued = person.issued || mine.issued;
+        person.violations = person.violations || [];
+
+        var licence = load(STORE_F);
+        if (licence && licence.passportNo === mine.no && !person.licence) {
+          person.licence = {
+            no: licence.no,
+            klass: licence.klass,
+            waters: licence.waters,
+            quarry: licence.quarry || "",
+            approvedAt: licence.valid
+          };
+        }
+
+        people[mine.no] = person;
+        save(STORE_PEOPLE, people);
+        renderPeople();
+        fillWhoSelect();
+      }
+
+      /* cloudPush folds the register into this device and writes the union,
+         so everything either side knows ends up on both */
+      if (Object.keys(loadPeople()).length) { cloudPush(); }
+    }
+
     function refreshFromRegister() {
       cloudPull(function (err) {
         if (err) { return; }
         var showing = normaliseNo($("v-no").value);
         if (showing && !$("v-record").hidden) { renderRecord(showing); }
         refreshStanding();
+        /* anything this device still owes the register goes now */
+        if (hasUnsent()) { setTimeout(cloudPush, CLOUD_GAP + 500); }
       });
     }
 
     paintCloud();
-    refreshFromRegister();
+    cloudPull(function () { refreshStanding(); });
+
+    /* publish whatever this device holds, whether or not the first read
+       got through \u2014 cloudPush reads again before it writes */
+    setTimeout(publishWhatThisDeviceHolds, 5000);
 
     /* a quiet poll so a violation recorded elsewhere turns up on its own,
        and an immediate check whenever the page is looked at again */
-    setInterval(refreshFromRegister, 60000);
+    setInterval(refreshFromRegister, 60000 + Math.floor(Math.random() * 30000));
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden) { refreshFromRegister(); }
     });
